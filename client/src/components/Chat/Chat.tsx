@@ -5,12 +5,22 @@ import SendMessageForm from "./SendMessageForm";
 
 const Chat = (props: IChatProps) => {
   return (
-    <div>
-      <div>
-        <button onClick={props.closeConnection}>Leave Room</button>
+    <div className="flex flex-col p-5 full-height">
+      <div className="flex justify-between">
+        <span className="text-xl font-bold w-full self-center">
+          {props.currentChat}
+        </span>
+        <button
+          className="btn btn-outline btn-warning self-end w-28 m-2"
+          onClick={props.closeConnection}
+        >
+          Leave Room
+        </button>
       </div>
-      <ConnectedUsers users={props.users}></ConnectedUsers>
-      <MessageContainer messages={props.messages}></MessageContainer>
+      <div className="flex grow mb-2">
+        <MessageContainer messages={props.messages}></MessageContainer>
+        <ConnectedUsers users={props.users}></ConnectedUsers>
+      </div>
       <SendMessageForm sendMessage={props.sendMessage}></SendMessageForm>
     </div>
   );

@@ -12,8 +12,9 @@ export default function Main() {
   const [connection, setConnection] = useState<HubConnection>();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [users, setUsers] = useState<string[]>([]);
+  const [currentChat, setCurrentChat] = useState<string>("");
 
-  const joinRoom = async (user?: string, room?: string) => {
+  const joinRoom = async (user: string, room: string) => {
     try {
       const connection = new HubConnectionBuilder()
         .withUrl("https://localhost:7278/hubs/chat")
@@ -28,6 +29,7 @@ export default function Main() {
         setConnection(undefined);
         setMessages([]);
         setUsers([]);
+        setCurrentChat("");
       });
 
       connection.on("RecieveConnectedUsers", (users: string[]) => {
@@ -37,6 +39,7 @@ export default function Main() {
       await connection.start();
       await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
+      setCurrentChat(room);
     } catch (e) {
       console.log(e);
     }
@@ -54,6 +57,7 @@ export default function Main() {
     try {
       await connection?.stop();
       setConnection(undefined);
+      setCurrentChat("");
     } catch (e) {
       console.log(e);
     }
@@ -69,6 +73,7 @@ export default function Main() {
           sendMessage={sendMessage}
           closeConnection={closeConnection}
           users={users}
+          currentChat={currentChat}
         />
       )}
     </main>

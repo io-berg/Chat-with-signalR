@@ -11,16 +11,21 @@ const MessageContainer = (props: IMessageContainerProps) => {
     }
   }, [props.messages]);
 
-  const messa = props.messages.map((message, index) => {
+  const messages = props.messages.map((message, index) => {
     return (
-      <div key={index}>
-        <span>{message.user}</span>
-        <span>{message.message}</span>
+      <div key={index} className="flex flex-col">
+        <span className="text-gray-100">{message.message}</span>
+        <span className="text-xs">{message.user}</span>
+        <div className="divider m-0.5"></div>
       </div>
     );
   });
 
-  return <div ref={messageRef}>{messa}</div>;
+  return (
+    <div className="flex flex-col shrink h-full w-full" ref={messageRef}>
+      {messages}
+    </div>
+  );
 };
 
 export default MessageContainer;
