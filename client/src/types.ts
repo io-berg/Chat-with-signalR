@@ -7,6 +7,7 @@ export interface IChatProps {
   users: string[];
   sendMessage: (message: string) => Promise<void>;
   closeConnection: () => void;
+  currentChat: string;
 }
 
 export interface IMessage {
