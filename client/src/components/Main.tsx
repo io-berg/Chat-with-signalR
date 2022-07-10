@@ -1,19 +1,20 @@
 import Lobby from "./Lobby/Lobby";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   HubConnection,
   HubConnectionBuilder,
   LogLevel,
 } from "@microsoft/signalr";
-import { IAlert, IMainProps, IMessage } from "../types";
+import { IAlert, IMainProps, IMessage, IRoom } from "../types";
 import Chat from "./Chat/Chat";
-import { randomUUID } from "crypto";
+import { getRooms } from "../helpers/apicalls";
 
 const Main: FC<IMainProps> = ({ addAlert }) => {
   const [connection, setConnection] = useState<HubConnection>();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [users, setUsers] = useState<string[]>([]);
   const [currentChat, setCurrentChat] = useState<string>("");
+  const [rooms, setRooms] = useState<IRoom[]>([]);
 
   const joinRoom = async (user: string, room: string) => {
     try {
@@ -70,10 +71,17 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
     }
   };
 
+  useEffect(() => {
+    console.log("Hello from useEffect");
+    getRooms().then((rooms: IRoom[]) => {
+      setRooms(rooms);
+    });
+  }, []);
+
   return (
     <main>
       {!connection ? (
-        <Lobby joinRoom={joinRoom} />
+        <Lobby joinRoom={joinRoom} rooms={rooms} />
       ) : (
         <Chat
           messages={messages}

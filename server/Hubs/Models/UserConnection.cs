@@ -1,4 +1,4 @@
-namespace server.Hubs
+namespace server.Hubs.Models
 {
     public class UserConnection
     {

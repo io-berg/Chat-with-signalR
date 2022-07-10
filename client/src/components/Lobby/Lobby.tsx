@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ILobbyProps } from "../../types";
+import RoomsInfo from "./RoomsInfo";
 
 const Lobby = (props: ILobbyProps) => {
   const [user, setUser] = useState<string>("");
@@ -55,6 +56,7 @@ const Lobby = (props: ILobbyProps) => {
             </div>
           </form>
         </div>
+        {props.rooms.length > 0 ? <RoomsInfo rooms={props.rooms} /> : null}
       </div>
     </div>
   );
