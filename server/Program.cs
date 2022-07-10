@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using server.Hubs;
+using server.Hubs.Models;
 using Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);

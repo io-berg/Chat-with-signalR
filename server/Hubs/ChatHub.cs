@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using server.Hubs.Models;
 
 namespace server.Hubs
 {
