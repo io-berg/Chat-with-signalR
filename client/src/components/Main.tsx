@@ -1,14 +1,15 @@
 import Lobby from "./Lobby/Lobby";
-import { useState } from "react";
+import { FC, useState } from "react";
 import {
   HubConnection,
   HubConnectionBuilder,
   LogLevel,
 } from "@microsoft/signalr";
-import { IMessage } from "../types";
+import { IAlert, IMainProps, IMessage } from "../types";
 import Chat from "./Chat/Chat";
+import { randomUUID } from "crypto";
 
-export default function Main() {
+const Main: FC<IMainProps> = ({ addAlert }) => {
   const [connection, setConnection] = useState<HubConnection>();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [users, setUsers] = useState<string[]>([]);
@@ -40,8 +41,14 @@ export default function Main() {
       await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
       setCurrentChat(room);
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      const alert: IAlert = {
+        id: crypto.randomUUID(),
+        type: "error",
+        message: e.message,
+      };
+
+      addAlert(alert);
     }
   };
 
@@ -78,4 +85,6 @@ export default function Main() {
       )}
     </main>
   );
-}
+};
+
+export default Main;

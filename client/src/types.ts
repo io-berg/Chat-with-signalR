@@ -26,3 +26,28 @@ export interface ISendMessageFormProps {
 export interface IConnectedUsersProps {
   users: string[];
 }
+
+export interface IAlertsConatinerProps {
+  alerts: IAlert[];
+  removeAlert: (id: string) => void;
+}
+
+export interface IHeaderProps {
+  alerts: IAlert[];
+  removeAlert: (id: string) => void;
+}
+
+export interface IMainProps {
+  addAlert: (alert: IAlert) => void;
+}
+
+export interface IAlertProps {
+  alert: IAlert;
+  removeAlert: (id: string) => void;
+}
+
+export interface IAlert {
+  id: string;
+  message: string;
+  type: string;
+}
