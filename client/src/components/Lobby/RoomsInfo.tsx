@@ -1,7 +1,25 @@
 import { FC } from "react";
 import { IRoomsInfoProps } from "../../types";
 
-const RoomsInfo: FC<IRoomsInfoProps> = ({ rooms }) => {
+const RoomsInfo: FC<IRoomsInfoProps> = ({
+  rooms,
+  addAlert,
+  joinRoom,
+  user,
+}) => {
+  function join(room: string) {
+    if (!user) {
+      addAlert({
+        id: crypto.randomUUID(),
+        type: "error",
+        message: "Please enter a username to join the room.",
+      });
+      return;
+    }
+
+    joinRoom(user, room);
+  }
+
   const roomsInfo = (
     <div className="overflow-x-auto">
       <h3 className="text-center font-bold mb-1">Active Rooms</h3>
@@ -15,7 +33,11 @@ const RoomsInfo: FC<IRoomsInfoProps> = ({ rooms }) => {
         <tbody>
           {rooms.map((room, index) => {
             return (
-              <tr key={index}>
+              <tr
+                key={index}
+                onClick={() => join(room.room)}
+                className="cursor-pointer"
+              >
                 <td className="">
                   {room.room.length > 10
                     ? room.room.slice(0, 10) + "..."

@@ -6,7 +6,7 @@ const AlertsContainer: FC<IAlertsConatinerProps> = ({
   alerts,
   removeAlert,
 }) => {
-  const [showAlerts, setShowAlerts] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(true);
 
   const allertsList = (
     <div className="toast z-50 fixed top-0 right-0 mt-14 mr-2">

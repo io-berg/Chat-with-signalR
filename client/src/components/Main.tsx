@@ -72,7 +72,6 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
   };
 
   useEffect(() => {
-    console.log("Hello from useEffect");
     getRooms().then((rooms: IRoom[]) => {
       setRooms(rooms);
     });
@@ -81,7 +80,7 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
   return (
     <main>
       {!connection ? (
-        <Lobby joinRoom={joinRoom} rooms={rooms} />
+        <Lobby joinRoom={joinRoom} rooms={rooms} addAlert={addAlert} />
       ) : (
         <Chat
           messages={messages}

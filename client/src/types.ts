@@ -1,5 +1,6 @@
 export interface ILobbyProps {
   joinRoom: (room: string, user: string) => Promise<void>;
+  addAlert: (alert: IAlert) => void;
   rooms: IRoom[];
 }
 
@@ -54,6 +55,9 @@ export interface IAlertProps {
 
 export interface IRoomsInfoProps {
   rooms: IRoom[];
+  addAlert: (alert: IAlert) => void;
+  joinRoom: (room: string, user: string) => Promise<void>;
+  user: string;
 }
 
 export interface IAlert {
