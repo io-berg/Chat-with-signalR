@@ -56,7 +56,14 @@ const Lobby = (props: ILobbyProps) => {
             </div>
           </form>
         </div>
-        {props.rooms.length > 0 ? <RoomsInfo rooms={props.rooms} /> : null}
+        {props.rooms.length > 0 ? (
+          <RoomsInfo
+            rooms={props.rooms}
+            addAlert={props.addAlert}
+            joinRoom={props.joinRoom}
+            user={user}
+          />
+        ) : null}
       </div>
     </div>
   );
