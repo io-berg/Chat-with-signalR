@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using server.Hubs;
+using server.Hubs.HubServices;
 using server.Hubs.Models;
 using Server.Data;
 
@@ -23,7 +24,8 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-builder.Services.AddSingleton<IDictionary<string, UserConnection>>(options => new Dictionary<string, UserConnection>());
+
+builder.Services.AddSingleton<ChatConnectionsRepository>();
 
 var app = builder.Build();
 

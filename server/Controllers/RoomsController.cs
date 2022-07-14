@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using server.Hubs.HubServices;
 using server.Hubs.Models;
 
 namespace Server.Controllers
@@ -6,9 +7,9 @@ namespace Server.Controllers
     [Route("api/[controller]")]
     public class RoomsController : Controller
     {
-        private readonly IDictionary<string, UserConnection> _connections;
+        private readonly ChatConnectionsRepository _connections;
 
-        public RoomsController(IDictionary<string, UserConnection> connections)
+        public RoomsController(ChatConnectionsRepository connections)
         {
             _connections = connections;
         }
@@ -17,10 +18,7 @@ namespace Server.Controllers
         [HttpGet]
         public IActionResult Get(int count = 10)
         {
-            var rooms = _connections.Values.GroupBy(c => c.Room)
-                .Select(c => new RoomInfo { Room = c.Key, Users = c.Count() })
-                .OrderByDescending(r => r.Users)
-                .Take(count);
+            var rooms = _connections.GetRoomInfosAsync(count);
 
             return Ok(rooms);
         }
