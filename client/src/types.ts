@@ -9,12 +9,20 @@ export interface IRoom {
   users: number;
 }
 
+export interface IUserConnection {
+  user: string;
+  room: string;
+}
+
 export interface IChatProps {
   messages: IMessage[];
   users: string[];
   sendMessage: (message: string) => Promise<void>;
   closeConnection: () => void;
   currentChat: string;
+  typingUsers: IUserConnection[];
+  startTyping: () => void;
+  stopTyping: () => void;
 }
 
 export interface IMessage {
@@ -28,6 +36,8 @@ export interface IMessageContainerProps {
 
 export interface ISendMessageFormProps {
   sendMessage: (message: string) => Promise<void>;
+  startTyping: () => void;
+  stopTyping: () => void;
 }
 
 export interface IConnectedUsersProps {

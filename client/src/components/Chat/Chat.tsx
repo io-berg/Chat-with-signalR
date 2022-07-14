@@ -1,9 +1,23 @@
-import { IChatProps, IMessage } from "../../types";
+import { IChatProps, IUserConnection } from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
 
 const Chat = (props: IChatProps) => {
+  const currentlyTyping: string = props.typingUsers
+    .map((userConnection) => userConnection.user)
+    .join(", ");
+
+  const currentlyTypingText = () => {
+    if (currentlyTyping.length > 0) {
+      if (props.typingUsers.length === 1) {
+        return `${currentlyTyping} is typing...`;
+      }
+      return `${currentlyTyping} are typing...`;
+    }
+    return "";
+  };
+
   return (
     <div className="flex flex-col p-5 full-height">
       <div className="flex justify-between">
@@ -21,7 +35,12 @@ const Chat = (props: IChatProps) => {
         <MessageContainer messages={props.messages}></MessageContainer>
         <ConnectedUsers users={props.users}></ConnectedUsers>
       </div>
-      <SendMessageForm sendMessage={props.sendMessage}></SendMessageForm>
+      <span className="pb-1">{currentlyTypingText()}</span>
+      <SendMessageForm
+        sendMessage={props.sendMessage}
+        startTyping={props.startTyping}
+        stopTyping={props.stopTyping}
+      ></SendMessageForm>
     </div>
   );
 };
