@@ -5,7 +5,7 @@ import {
   HubConnectionBuilder,
   LogLevel,
 } from "@microsoft/signalr";
-import { IAlert, IMainProps, IMessage, IRoom } from "../types";
+import { IAlert, IMainProps, IMessage, IRoom, IUserConnection } from "../types";
 import Chat from "./Chat/Chat";
 import { getRooms } from "../helpers/apicalls";
 
@@ -15,6 +15,7 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
   const [users, setUsers] = useState<string[]>([]);
   const [currentChat, setCurrentChat] = useState<string>("");
   const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [typingUsers, setTypingUsers] = useState<IUserConnection[]>([]);
 
   const joinRoom = async (user: string, room: string) => {
     try {
@@ -38,6 +39,10 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
         setUsers(users);
       });
 
+      connection.on("RecieveTypingUsers", (users: IUserConnection[]) => {
+        setTypingUsers(users);
+      });
+
       await connection.start();
       await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
@@ -56,6 +61,22 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
   const sendMessage = async (message: string) => {
     try {
       await connection?.invoke("SendMessage", message);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const startTyping = async () => {
+    try {
+      await connection?.invoke("IsTyping");
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const stopTyping = async () => {
+    try {
+      await connection?.invoke("StopTyping");
     } catch (e) {
       console.log(e);
     }
@@ -88,6 +109,9 @@ const Main: FC<IMainProps> = ({ addAlert }) => {
           closeConnection={closeConnection}
           users={users}
           currentChat={currentChat}
+          typingUsers={typingUsers}
+          startTyping={startTyping}
+          stopTyping={stopTyping}
         />
       )}
     </main>

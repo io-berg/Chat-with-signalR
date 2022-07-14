@@ -26,6 +26,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddSingleton<ChatConnectionsRepository>();
+builder.Services.AddSingleton<CurrentlyTypingRepository>();
 
 var app = builder.Build();
 
