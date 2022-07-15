@@ -9,7 +9,7 @@ import { IAlert, IMainProps, IMessage, IRoom, IUserConnection } from "../types";
 import Chat from "./Chat/Chat";
 import { getRooms } from "../helpers/apicalls";
 
-const Main: FC<IMainProps> = ({ addAlert }) => {
+const Main = ({ addAlert }: IMainProps) => {
   const [connection, setConnection] = useState<HubConnection>();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [users, setUsers] = useState<string[]>([]);

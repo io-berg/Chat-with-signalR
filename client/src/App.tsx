@@ -4,6 +4,7 @@ import Main from "./components/Main";
 import Footer from "./components/Footer";
 import { useState } from "react";
 import { IAlert } from "./types";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
   const [alerts, setAlerts] = useState<IAlert[]>([]);
@@ -18,9 +19,12 @@ function App() {
 
   return (
     <div className="App h-screen">
-      <Header alerts={alerts} removeAlert={removeAlertHandler}></Header>
-      <Main addAlert={addAlertHandler}></Main>
-      <Footer></Footer>
+      <Header alerts={alerts} removeAlert={removeAlertHandler} />
+      <Routes>
+        <Route path="/" element={<Main addAlert={addAlertHandler} />} />
+        <Route path="/chat" element={<Main addAlert={addAlertHandler} />} />
+      </Routes>
+      <Footer />
     </div>
   );
 }
