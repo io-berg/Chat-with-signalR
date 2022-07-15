@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using server.Hubs.HubServices;
-using server.Hubs.Models;
 
 namespace Server.Controllers
 {
     [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
     public class RoomsController : Controller
     {
         private readonly ChatConnectionsRepository _connections;
