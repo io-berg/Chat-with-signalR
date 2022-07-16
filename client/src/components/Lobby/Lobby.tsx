@@ -1,10 +1,17 @@
-import { useState } from "react";
-import { ILobbyProps } from "../../types";
+import { FC, useEffect, useState } from "react";
+import { getRooms } from "../../helpers/apicalls";
+import { ILobbyProps, IRoom } from "../../types";
 import RoomsInfo from "./RoomsInfo";
 
-const Lobby = (props: ILobbyProps) => {
+const Lobby: FC<ILobbyProps> = ({ joinRoom, setRooms, rooms, addAlert }) => {
   const [user, setUser] = useState<string>("");
   const [room, setRoom] = useState<string>("");
+
+  useEffect(() => {
+    getRooms().then((rooms: IRoom[]) => {
+      setRooms(rooms);
+    });
+  }, []);
 
   return (
     <div className="hero bg-base-200 full-height">
@@ -17,7 +24,7 @@ const Lobby = (props: ILobbyProps) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              props.joinRoom(user, room);
+              joinRoom(user, room);
             }}
             className="card-body"
           >
@@ -56,11 +63,11 @@ const Lobby = (props: ILobbyProps) => {
             </div>
           </form>
         </div>
-        {props.rooms.length > 0 ? (
+        {rooms.length > 0 ? (
           <RoomsInfo
-            rooms={props.rooms}
-            addAlert={props.addAlert}
-            joinRoom={props.joinRoom}
+            rooms={rooms}
+            addAlert={addAlert}
+            joinRoom={joinRoom}
             user={user}
           />
         ) : null}

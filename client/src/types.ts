@@ -2,6 +2,7 @@ export interface ILobbyProps {
   joinRoom: (room: string, user: string) => Promise<void>;
   addAlert: (alert: IAlert) => void;
   rooms: IRoom[];
+  setRooms: (rooms: IRoom[]) => void;
 }
 
 export interface IRoom {
