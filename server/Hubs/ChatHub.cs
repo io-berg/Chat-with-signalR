@@ -32,6 +32,7 @@ namespace server.Hubs
             if (_connections.GetUser(Context.ConnectionId, out UserConnection userConnection))
             {
                 await Clients.Group(userConnection.Room).SendAsync("RecieveMessage", userConnection.User, message);
+                await StopTyping();
             }
         }
 
