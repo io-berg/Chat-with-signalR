@@ -9,7 +9,7 @@ const getRooms = async () => {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${await currentAuthToken()}`,
+      Authorization: `Bearer ${currentAuthToken()}`,
     },
   });
   const data = response.json();

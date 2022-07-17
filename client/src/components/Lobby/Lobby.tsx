@@ -1,11 +1,18 @@
 import { FC, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { getRooms } from "../../helpers/apicalls";
 import { ILobbyProps, IRoom } from "../../types";
 import RoomsInfo from "./RoomsInfo";
 
-const Lobby: FC<ILobbyProps> = ({ joinRoom, setRooms, rooms, addAlert }) => {
-  const [user, setUser] = useState<string>("");
+const Lobby: FC<ILobbyProps> = ({
+  joinRoom,
+  setRooms,
+  rooms,
+  addAlert,
+  loggedInUser,
+}) => {
   const [room, setRoom] = useState<string>("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     getRooms().then((rooms: IRoom[]) => {
@@ -24,22 +31,10 @@ const Lobby: FC<ILobbyProps> = ({ joinRoom, setRooms, rooms, addAlert }) => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              joinRoom(user, room);
+              navigate(`/chat/${room}`);
             }}
             className="card-body"
           >
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Username</span>
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="username"
-                className="input input-bordered"
-                onChange={(e) => setUser(e.target.value)}
-              />
-            </div>
             <div className="form-control">
               <label className="label">
                 <span className="label-text">Room</span>
@@ -56,7 +51,7 @@ const Lobby: FC<ILobbyProps> = ({ joinRoom, setRooms, rooms, addAlert }) => {
               <button
                 className="btn btn-primary mb-4"
                 type="submit"
-                disabled={!user || !room}
+                disabled={!room}
               >
                 Join
               </button>
@@ -68,7 +63,7 @@ const Lobby: FC<ILobbyProps> = ({ joinRoom, setRooms, rooms, addAlert }) => {
             rooms={rooms}
             addAlert={addAlert}
             joinRoom={joinRoom}
-            user={user}
+            user={loggedInUser}
           />
         ) : null}
       </div>

@@ -30,33 +30,35 @@ const authenticate = async (username: string, password: string) => {
 };
 
 const isAuthenticated = async () => {
-  const token = await currentAuthToken();
-
-  if (token === "") {
-    return false;
-  }
-
+  const token = currentAuthToken();
   const URL = BASEURL + "IsAuthenticated";
 
-  const response = await fetch(URL, {
+  const response = fetch(URL, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
   });
-
-  if (response.status === 200) {
-    return true;
-  } else if (response.status === 404) {
-    return false;
+  const result = await response;
+  const data = await result.text();
+  if (result.status === 200) {
+    return {
+      user: data,
+      isAuthenticated: true,
+    };
   }
-  return false;
+  return {
+    user: "",
+    isAuthenticated: false,
+  };
 };
 
 const currentAuthToken = () => {
   const token = localStorage.getItem("token");
-
+  if (token === null) {
+    return "";
+  }
   return token;
 };
 

@@ -3,6 +3,7 @@ export interface ILobbyProps {
   addAlert: (alert: IAlert) => void;
   rooms: IRoom[];
   setRooms: (rooms: IRoom[]) => void;
+  loggedInUser: string;
 }
 
 export interface IRoom {
@@ -18,12 +19,14 @@ export interface IUserConnection {
 export interface IChatProps {
   messages: IMessage[];
   users: string[];
+  currentUser: string;
   sendMessage: (message: string) => Promise<void>;
   closeConnection: () => void;
   currentChat: string;
   typingUsers: IUserConnection[];
   startTyping: () => void;
   stopTyping: () => void;
+  joinRoom: (room: string, user: string) => Promise<void>;
 }
 
 export interface IMessage {

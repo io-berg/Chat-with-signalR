@@ -8,15 +8,6 @@ const RoomsInfo: FC<IRoomsInfoProps> = ({
   user,
 }) => {
   function join(room: string) {
-    if (!user) {
-      addAlert({
-        id: crypto.randomUUID(),
-        type: "error",
-        message: "Please enter a username to join the room.",
-      });
-      return;
-    }
-
     joinRoom(user, room);
   }
 

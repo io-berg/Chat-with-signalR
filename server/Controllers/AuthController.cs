@@ -1,3 +1,4 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -72,7 +73,7 @@ namespace server.Controllers
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
-                    expiration = token.ValidTo
+                    expiration = token.ValidTo,
                 });
             }
             return Unauthorized();
@@ -82,7 +83,7 @@ namespace server.Controllers
         [Route("IsAuthenticated")]
         public IActionResult IsAuthenticated()
         {
-            return Ok();
+            return Ok(User.Identity.IsAuthenticated);
         }
 
         private JwtSecurityToken GetToken(List<Claim> authClaims)
