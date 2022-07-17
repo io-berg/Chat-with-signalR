@@ -1,10 +1,17 @@
 import { IRoom } from "../types";
+import { currentAuthToken } from "./auth";
 
 const BASEURL = "https://localhost:7278/api/";
 
 const getRooms = async () => {
   const URL = BASEURL + "Rooms";
-  const response = await fetch(URL);
+  const response = await fetch(URL, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${currentAuthToken()}`,
+    },
+  });
   const data = response.json();
 
   if (response.status === 200) {
