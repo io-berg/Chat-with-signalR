@@ -64,18 +64,17 @@ function App() {
         setTypingUsers(users);
       });
 
+      connection.on("AlreadyConnected", () => {
+        addAlert("warning", "You are already connected to this room");
+        navigate("/lobby");
+      });
+
       await connection.start();
       await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
       setCurrentChat(room);
     } catch (e: any) {
-      const alert: IAlert = {
-        id: crypto.randomUUID(),
-        type: "error",
-        message: e.message,
-      };
-
-      addAlert(alert);
+      addAlert("error", e.message);
     }
   };
 
@@ -89,13 +88,7 @@ function App() {
         navigate("/lobby/");
       }
     } catch (e: any) {
-      const alert: IAlert = {
-        id: crypto.randomUUID(),
-        type: "error",
-        message: e.message,
-      };
-
-      addAlert(alert);
+      addAlert("error", e.message);
     }
   };
 
@@ -133,7 +126,13 @@ function App() {
     }
   };
 
-  const addAlert = (alert: IAlert) => {
+  const addAlert = (type: string, message: string) => {
+    const alert: IAlert = {
+      id: crypto.randomUUID(),
+      type,
+      message,
+    };
+
     setAlerts((alerts) => [...alerts, alert]);
   };
 

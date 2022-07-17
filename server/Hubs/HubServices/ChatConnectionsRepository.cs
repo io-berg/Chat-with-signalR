@@ -32,6 +32,11 @@ namespace server.Hubs.HubServices
             return _connections.TryGetValue(connectionId, out userConnection);
         }
 
+        public bool IsConnectedToRoom(string username, string room)
+        {
+            return _connections.Any(c => c.Value.User == username && c.Value.Room == room);
+        }
+
         public List<RoomInfo> GetRoomInfosAsync(int count = 10)
         {
             var rooms = _connections.Values.GroupBy(c => c.Room)

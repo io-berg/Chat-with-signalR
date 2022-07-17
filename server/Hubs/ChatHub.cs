@@ -17,14 +17,20 @@ namespace server.Hubs
             _botUser = "ChatBot";
         }
 
-        public async Task JoinRoom(UserConnection userConnection)
+        public async Task JoinRoom(UserConnection connectionRequest)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, userConnection.Room);
+            if (_connections.IsConnectedToRoom(connectionRequest.User, connectionRequest.Room))
+            {
+                await Clients.Caller.SendAsync("AlreadyConnected", connectionRequest.Room);
+                return;
+            }
 
-            _connections.Add(Context.ConnectionId, userConnection);
+            await Groups.AddToGroupAsync(Context.ConnectionId, connectionRequest.Room);
 
-            await SendConnectedUsers(userConnection.Room);
-            await Clients.Group(userConnection.Room).SendAsync("RecieveMessage", _botUser, $"{userConnection.User} has joined the room {userConnection.Room}");
+            _connections.Add(Context.ConnectionId, connectionRequest);
+
+            await SendConnectedUsers(connectionRequest.Room);
+            await Clients.Group(connectionRequest.Room).SendAsync("RecieveMessage", _botUser, $"{connectionRequest.User} has joined the room {connectionRequest.Room}");
         }
 
         public async Task SendMessage(String message)

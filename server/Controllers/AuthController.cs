@@ -83,7 +83,7 @@ namespace server.Controllers
         [Route("IsAuthenticated")]
         public IActionResult IsAuthenticated()
         {
-            return Ok(User.Identity.IsAuthenticated);
+            return Ok(User.Identity.Name);
         }
 
         private JwtSecurityToken GetToken(List<Claim> authClaims)
