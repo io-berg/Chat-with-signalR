@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { useNavigate } from "react-router-dom";
 import { IRoomsInfoProps } from "../../types";
 
 const RoomsInfo: FC<IRoomsInfoProps> = ({
@@ -7,8 +8,9 @@ const RoomsInfo: FC<IRoomsInfoProps> = ({
   joinRoom,
   user,
 }) => {
+  const navigate = useNavigate();
   function join(room: string) {
-    joinRoom(user, room);
+    navigate(`/chat/${room}`);
   }
 
   const roomsInfo = (
