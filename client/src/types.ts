@@ -76,3 +76,12 @@ export interface IAlert {
   message: string;
   type: string;
 }
+
+export interface IAuthResponse {
+  token: string;
+  expiration: string;
+}
+
+export interface ILoginProps {
+  login: (username: string, password: string) => void;
+}

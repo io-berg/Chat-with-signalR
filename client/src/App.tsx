@@ -1,7 +1,6 @@
-import "./App.css";
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IAlert, IMessage, IRoom, IUserConnection } from "./types";
 import {
   BrowserRouter as Router,
@@ -17,8 +16,12 @@ import {
   LogLevel,
 } from "@microsoft/signalr";
 import Chat from "./components/Chat/Chat";
+import { authenticate, isAuthenticated } from "./helpers/auth";
+import Login from "./components/Login/Login";
+import ProtectedRoute from "./components/Auth/ProtectedRoute.js";
 
 function App() {
+  const [isAuthed, setIsAuthed] = useState(false);
   const [alerts, setAlerts] = useState<IAlert[]>([]);
   const [connection, setConnection] = useState<HubConnection>();
   const [messages, setMessages] = useState<IMessage[]>([]);
@@ -60,6 +63,24 @@ function App() {
       setCurrentChat(room);
 
       navigate(`/chat/${room}`);
+    } catch (e: any) {
+      const alert: IAlert = {
+        id: crypto.randomUUID(),
+        type: "error",
+        message: e.message,
+      };
+
+      addAlert(alert);
+    }
+  };
+
+  const login = async (user: string, password: string) => {
+    try {
+      const result = await authenticate(user, password);
+
+      if (result) {
+        navigate("/lobby/");
+      }
     } catch (e: any) {
       const alert: IAlert = {
         id: crypto.randomUUID(),
@@ -113,22 +134,37 @@ function App() {
     setAlerts((alerts) => alerts.filter((alert) => alert.id !== id));
   };
 
+  useEffect(() => {
+    isAuthenticated().then((result) => {
+      setIsAuthed(result);
+    });
+  });
+
   return (
     <div className="App h-screen">
       <Header alerts={alerts} removeAlert={removeAlert} />
       <main>
         <Routes>
+          <Route path="/" element={<Login login={login} />} />
+
           <Route
-            path="/"
+            path="/lobby"
             element={
-              <Lobby
-                joinRoom={joinRoom}
-                addAlert={addAlert}
-                rooms={rooms}
-                setRooms={setRooms}
+              <ProtectedRoute
+                isAuthenticated={isAuthed}
+                authenticationPath="/"
+                outlet={
+                  <Lobby
+                    joinRoom={joinRoom}
+                    addAlert={addAlert}
+                    rooms={rooms}
+                    setRooms={setRooms}
+                  />
+                }
               />
             }
           />
+
           <Route
             path="/chat/:room"
             element={
@@ -144,9 +180,6 @@ function App() {
               />
             }
           />
-          <Route path="/login" />
-          <Route path="/register" />
-          <Route path="/profile" />
         </Routes>
       </main>
       <Footer />

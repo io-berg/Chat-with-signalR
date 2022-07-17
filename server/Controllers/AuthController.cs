@@ -78,6 +78,13 @@ namespace server.Controllers
             return Unauthorized();
         }
 
+        [HttpGet]
+        [Route("IsAuthenticated")]
+        public IActionResult IsAuthenticated()
+        {
+            return Ok();
+        }
+
         private JwtSecurityToken GetToken(List<Claim> authClaims)
         {
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
