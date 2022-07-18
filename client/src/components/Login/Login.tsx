@@ -55,6 +55,7 @@ const Login: FC<ILoginProps> = ({ login }) => {
               <button
                 onClick={() => tryLogin(username, password)}
                 className="btn btn-primary"
+                disabled={!username || !password}
               >
                 Login
               </button>

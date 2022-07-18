@@ -1,7 +1,14 @@
 import Header from "./components/Header.jsx";
 import Footer from "./components/Footer";
 import { useEffect, useState } from "react";
-import { IAlert, IMessage, IRoom, IUserConnection } from "./types";
+import {
+  IAlert,
+  IMessage,
+  IRegisterErrorItem,
+  IRegisterResult,
+  IRoom,
+  IUserConnection,
+} from "./types";
 import {
   BrowserRouter as Router,
   Link,
@@ -20,9 +27,11 @@ import {
   authenticate,
   currentAuthToken,
   isAuthenticated,
+  registerAccount,
 } from "./helpers/auth";
 import Login from "./components/Login/Login";
 import { ProtectedRoute } from "./components/Auth/ProtectedRoute.js";
+import Register from "./components/Register/Register.js";
 
 function App() {
   const [alerts, setAlerts] = useState<IAlert[]>([]);
@@ -87,6 +96,32 @@ function App() {
         setAuthStatus(true);
         navigate("/lobby/");
       }
+    } catch (e: any) {
+      e.foreach((e: any) => {
+        addAlert("error", e);
+      });
+    }
+  };
+
+  const register = async (email: string, user: string, password: string) => {
+    try {
+      const result: IRegisterResult = await registerAccount(
+        email,
+        user,
+        password
+      );
+
+      console.log(result);
+
+      if (result.success) {
+        addAlert("success", "Account created successfully");
+        navigate("/lobby/");
+        return;
+      }
+
+      result.errors.forEach((e: IRegisterErrorItem) => {
+        addAlert("error", e.description);
+      });
     } catch (e: any) {
       addAlert("error", e.message);
     }
@@ -159,7 +194,10 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Login login={login} />} />
-
+          <Route
+            path="/register"
+            element={<Register register={register} addAlert={addAlert} />}
+          />
           <Route
             path="/lobby"
             element={

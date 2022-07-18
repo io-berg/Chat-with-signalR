@@ -26,22 +26,22 @@ const Header: FC<IHeaderProps> = ({ alerts, removeAlert }) => {
             </label>
             <ul className="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-200 rounded-box w-52">
               <li>
-                <a>Home</a>
+                <a>Not working yet</a>
               </li>
               <li>
-                <a>My Page</a>
+                <a>Not working yet</a>
               </li>
               <li>
-                <a>Highscores</a>
+                <a>Not working yet</a>
               </li>
               <li>
-                <a>Multiplayer</a>
+                <a>Not working yet</a>
               </li>
             </ul>
           </div>
         </div>
         <div className="navbar-center">
-          <a className="btn btn-ghost normal-case text-xl">MineSwooper</a>
+          <a className="btn btn-ghost normal-case text-xl">Signal-R Chat</a>
         </div>
         <div className="navbar-end">
           <AlertsContainer alerts={alerts} removeAlert={removeAlert} />

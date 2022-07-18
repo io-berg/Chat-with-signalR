@@ -1,4 +1,4 @@
-import { IAuthResponse } from "../types";
+import { IAuthResponse, IRegisterErrorItem, IRegisterResult } from "../types";
 
 const BASEURL = "https://localhost:7278/api/auth/";
 
@@ -24,6 +24,47 @@ const authenticate = async (username: string, password: string) => {
       return true;
     }
     return false;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+};
+
+const registerAccount = async (
+  email: string,
+  username: string,
+  password: string
+) => {
+  const URL = BASEURL + "Register";
+  try {
+    const response = await fetch(URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email,
+        username: username,
+        password: password,
+      }),
+    });
+    if (response.status === 200) {
+      const goodResult: IRegisterResult = {
+        success: true,
+        errors: [],
+      };
+      return goodResult;
+    }
+
+    const errors: IRegisterErrorItem[] = await response.json();
+
+    console.log(errors);
+
+    const badResult: IRegisterResult = {
+      success: false,
+      errors: errors,
+    };
+    console.log(badResult);
+    return badResult;
   } catch (error: any) {
     throw new Error(error.message);
   }
@@ -62,4 +103,4 @@ const currentAuthToken = () => {
   return token;
 };
 
-export { authenticate, isAuthenticated, currentAuthToken };
+export { authenticate, isAuthenticated, currentAuthToken, registerAccount };
