@@ -48,6 +48,11 @@ export interface IConnectedUsersProps {
   users: string[];
 }
 
+export interface IRegisterProps {
+  register: (user: string, password: string, email: string) => Promise<void>;
+  addAlert: (type: string, message: string) => void;
+}
+
 export interface IAlertsConatinerProps {
   alerts: IAlert[];
   removeAlert: (id: string) => void;
@@ -87,4 +92,14 @@ export interface IAuthResponse {
 
 export interface ILoginProps {
   login: (username: string, password: string) => void;
+}
+
+export interface IRegisterResult {
+  success: boolean;
+  errors: IRegisterErrorItem[];
+}
+
+export interface IRegisterErrorItem {
+  code: string;
+  description: string;
 }
