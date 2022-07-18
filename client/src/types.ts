@@ -61,6 +61,8 @@ export interface IAlertsConatinerProps {
 export interface IHeaderProps {
   alerts: IAlert[];
   removeAlert: (id: string) => void;
+  currentUser: string;
+  signout: () => void;
 }
 
 export interface IMainProps {

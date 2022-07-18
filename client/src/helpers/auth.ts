@@ -103,4 +103,14 @@ const currentAuthToken = () => {
   return token;
 };
 
-export { authenticate, isAuthenticated, currentAuthToken, registerAccount };
+const clearAuthToken = () => {
+  localStorage.removeItem("token");
+};
+
+export {
+  authenticate,
+  isAuthenticated,
+  currentAuthToken,
+  registerAccount,
+  clearAuthToken,
+};
