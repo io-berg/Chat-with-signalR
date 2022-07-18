@@ -25,6 +25,7 @@ import {
 import Chat from "./components/Chat/Chat";
 import {
   authenticate,
+  clearAuthToken,
   currentAuthToken,
   isAuthenticated,
   registerAccount,
@@ -184,13 +185,26 @@ function App() {
     }
   };
 
+  const signout = async () => {
+    clearAuthToken();
+    setAuthStatus(false);
+    setLoggedInUser("");
+    await closeConnection();
+    navigate("/");
+  };
+
   useEffect(() => {
     tryLoginAuto();
   }, []);
 
   return (
     <div className="App h-screen">
-      <Header alerts={alerts} removeAlert={removeAlert} />
+      <Header
+        alerts={alerts}
+        removeAlert={removeAlert}
+        currentUser={loggedInUser}
+        signout={signout}
+      />
       <main>
         <Routes>
           <Route path="/" element={<Login login={login} />} />
