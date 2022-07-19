@@ -1,7 +1,9 @@
 using System.Text;
+using Hubs.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Data;
@@ -56,18 +58,17 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:ValidIssuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
     };
+
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
 
-            // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
                 (path.StartsWithSegments("/chat")))
             {
-                // Read the token out of the query string
                 context.Token = accessToken;
             }
             return Task.CompletedTask;
@@ -93,6 +94,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<ChatConnectionsRepository>();
 builder.Services.AddSingleton<CurrentlyTypingRepository>();
+builder.Services.AddSingleton<NameUserIdProvider>();
 
 var app = builder.Build();
 

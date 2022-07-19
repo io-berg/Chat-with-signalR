@@ -1,4 +1,3 @@
-import { join } from "path";
 import { FC, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { IChatProps } from "../../types";
@@ -56,15 +55,15 @@ const Chat: FC<IChatProps> = ({
         </button>
       </div>
       <div className="flex grow mb-2">
-        <MessageContainer messages={messages}></MessageContainer>
-        <ConnectedUsers users={users}></ConnectedUsers>
+        <MessageContainer messages={messages} />
+        <ConnectedUsers users={users} />
       </div>
       <span className="pb-1">{currentlyTypingText()}</span>
-      <SendMessageForm
+      {/* <SendMessageForm
         sendMessage={sendMessage}
         startTyping={startTyping}
         stopTyping={stopTyping}
-      ></SendMessageForm>
+      ></SendMessageForm> */}
     </div>
   );
 };

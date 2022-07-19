@@ -3,11 +3,10 @@ import Footer from "./components/Footer";
 import { useEffect, useState } from "react";
 import {
   IAlert,
-  IMessage,
+  IOpenRoom,
   IRegisterErrorItem,
   IRegisterResult,
   IRoom,
-  IUserConnection,
 } from "./types";
 import {
   BrowserRouter as Router,
@@ -20,9 +19,9 @@ import Lobby from "./components/Lobby/Lobby";
 import {
   HubConnection,
   HubConnectionBuilder,
+  JsonHubProtocol,
   LogLevel,
 } from "@microsoft/signalr";
-import Chat from "./components/Chat/Chat";
 import {
   authenticate,
   clearAuthToken,
@@ -33,58 +32,87 @@ import {
 import Login from "./components/Login/Login";
 import { ProtectedRoute } from "./components/Auth/ProtectedRoute.js";
 import Register from "./components/Register/Register.js";
+import Chat2 from "./components/Chat/Chat2.js";
 
 function App() {
   const [alerts, setAlerts] = useState<IAlert[]>([]);
   const [connection, setConnection] = useState<HubConnection>();
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [users, setUsers] = useState<string[]>([]);
   const [currentChat, setCurrentChat] = useState<string>("");
-  const [rooms, setRooms] = useState<IRoom[]>([]);
-  const [typingUsers, setTypingUsers] = useState<IUserConnection[]>([]);
+  const [activeRoomsInfo, setActiveRoomsInfo] = useState<IRoom[]>([]);
   const [loggedInUser, setLoggedInUser] = useState<string>("");
   const [authStatus, setAuthStatus] = useState<boolean>(false);
+  const [openRooms, setOpenRooms] = useState<IOpenRoom[]>([]);
   const navigate = useNavigate();
 
-  const joinRoom = async (user: string, room: string) => {
+  const joinChat = async () => {
+    if (connection) return;
+
     try {
       const connection = new HubConnectionBuilder()
         .withUrl("https://localhost:7278/hubs/chat", {
           accessTokenFactory: () => currentAuthToken(),
         })
         .configureLogging(LogLevel.Information)
+        .withAutomaticReconnect()
         .build();
 
-      connection.on("RecieveMessage", (user: string, message: string) => {
-        setMessages((messages) => [...messages, { user, message }]);
+      connection.on(
+        "RecieveMessage",
+        (user: string, message: string, room: string) => {
+          console.log(user, message, room, "I RECIEVED A MSG");
+
+          setOpenRooms((prevOpenRooms) => {
+            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            if (roomIndex > -1) {
+              newOpenRooms[roomIndex].messages.push({ user, message });
+            }
+            return newOpenRooms;
+          });
+        }
+      );
+
+      // connection.onclose(() => {
+      //   setConnection(undefined);
+      //   setCurrentChat("");
+      // });
+
+      connection.on(
+        "RecieveConnectedUsers",
+        (users: string[], room: string) => {
+          setOpenRooms((prevOpenRooms) => {
+            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            if (roomIndex > -1) {
+              newOpenRooms[roomIndex].users = users;
+            }
+            return newOpenRooms;
+          });
+        }
+      );
+
+      connection.on("RecieveTypingUsers", (users: string[], room: string) => {
+        console.log(users, room, "I RECIEVED A TYPING MSG");
+
+        setOpenRooms((prevOpenRooms) => {
+          const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+          const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+          if (roomIndex > -1) {
+            newOpenRooms[roomIndex].typingUsers = users;
+          }
+          return newOpenRooms;
+        });
       });
 
-      connection.onclose(() => {
-        setConnection(undefined);
-        setMessages([]);
-        setUsers([]);
-        setCurrentChat("");
-      });
-
-      connection.on("RecieveConnectedUsers", (users: string[]) => {
-        setUsers(users);
-      });
-
-      connection.on("RecieveTypingUsers", (users: IUserConnection[]) => {
-        setTypingUsers(users);
-      });
-
-      connection.on("AlreadyConnected", () => {
-        addAlert("warning", "You are already connected to this room");
-        navigate("/lobby");
-      });
+      // connection.on("AlreadyConnected", () => {
+      //   addAlert("warning", "You are already connected to this room");
+      // });
 
       await connection.start();
-      await connection.invoke("JoinRoom", { user, room });
       setConnection(connection);
-      setCurrentChat(room);
     } catch (e: any) {
       addAlert("error", e.message);
+      setConnection(undefined);
     }
   };
 
@@ -95,7 +123,8 @@ function App() {
       if (result) {
         setLoggedInUser(user);
         setAuthStatus(true);
-        navigate("/lobby/");
+        joinChat();
+        navigate("/Chat2");
       }
     } catch (e: any) {
       e.foreach((e: any) => {
@@ -112,8 +141,6 @@ function App() {
         password
       );
 
-      console.log(result);
-
       if (result.success) {
         addAlert("success", "Account created successfully");
         navigate("/lobby/");
@@ -128,25 +155,25 @@ function App() {
     }
   };
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string, room: string) => {
     try {
-      await connection?.invoke("SendMessage", message);
+      await connection?.invoke("SendMessage", message, room);
     } catch (e) {
       console.log(e);
     }
   };
 
-  const startTyping = async () => {
+  const startTyping = async (room: string) => {
     try {
-      await connection?.invoke("IsTyping");
+      await connection?.invoke("IsTyping", room);
     } catch (e) {
       console.log(e);
     }
   };
 
-  const stopTyping = async () => {
+  const stopTyping = async (room: string) => {
     try {
-      await connection?.invoke("StopTyping");
+      await connection?.invoke("StopTyping", room);
     } catch (e) {
       console.log(e);
     }
@@ -157,6 +184,18 @@ function App() {
       await connection?.stop();
       setConnection(undefined);
       setCurrentChat("");
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const leaveRoom = async (room: string) => {
+    console.log("LEAVING ROOM", room);
+    try {
+      await connection?.invoke("LeaveRoom", room);
+      setOpenRooms((openRooms) => {
+        return openRooms.filter((r) => r.room !== room);
+      });
     } catch (e) {
       console.log(e);
     }
@@ -181,7 +220,8 @@ function App() {
     if (response.isAuthenticated) {
       setLoggedInUser(response.user);
       setAuthStatus(true);
-      navigate("/lobby");
+      joinChat();
+      navigate("/chat2");
     }
   };
 
@@ -191,6 +231,21 @@ function App() {
     setLoggedInUser("");
     await closeConnection();
     navigate("/");
+  };
+
+  const joinRoom = async (room: string) => {
+    try {
+      await connection?.invoke("JoinRoom", room);
+      setCurrentChat(room);
+      setOpenRooms([
+        ...openRooms,
+        { room: room, users: [], messages: [], typingUsers: [] },
+      ]);
+
+      console.log(openRooms, "onJoin");
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   useEffect(() => {
@@ -213,6 +268,24 @@ function App() {
             element={<Register register={register} addAlert={addAlert} />}
           />
           <Route
+            path="/chat2"
+            element={
+              <Chat2
+                currentRoom={currentChat}
+                setCurrentRoom={setCurrentChat}
+                openRooms={openRooms}
+                setOpenRooms={setOpenRooms}
+                joinRoom={joinRoom}
+                leaveRoom={leaveRoom}
+                joinChat={joinChat}
+                sendMessage={sendMessage}
+                startTyping={startTyping}
+                stopTyping={stopTyping}
+                currentUser={loggedInUser}
+              />
+            }
+          />
+          <Route
             path="/lobby"
             element={
               <ProtectedRoute
@@ -221,8 +294,8 @@ function App() {
                   <Lobby
                     joinRoom={joinRoom}
                     addAlert={addAlert}
-                    rooms={rooms}
-                    setRooms={setRooms}
+                    rooms={activeRoomsInfo}
+                    setRooms={setActiveRoomsInfo}
                     loggedInUser={loggedInUser}
                   />
                 }
@@ -230,7 +303,7 @@ function App() {
             }
           />
 
-          <Route
+          {/* <Route
             path="/chat/:room"
             element={
               <ProtectedRoute
@@ -251,7 +324,7 @@ function App() {
                 }
               />
             }
-          />
+          /> */}
         </Routes>
       </main>
       <Footer />

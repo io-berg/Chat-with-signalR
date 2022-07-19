@@ -4,26 +4,31 @@ namespace server.Hubs.HubServices
 {
     public class CurrentlyTypingRepository
     {
-        IDictionary<string, UserConnection> _repository;
+        List<UserConnection> _repository;
 
         public CurrentlyTypingRepository()
         {
-            _repository = new Dictionary<string, UserConnection>();
+            _repository = new List<UserConnection>();
         }
 
-        public void Add(string connectionId, UserConnection userConnection)
+        public void Add(UserConnection userConnection)
         {
-            _repository.Add(connectionId, userConnection);
+            _repository.Add(userConnection);
         }
 
-        public void Remove(string connectionId)
+        public void Remove(UserConnection userConnection)
         {
-            _repository.Remove(connectionId);
+            _repository.Remove(userConnection);
         }
 
-        public List<UserConnection> GetCurrentlyTyping(string room)
+        public UserConnection GetConnection(string user, string room)
         {
-            return _repository.Where(c => c.Value.Room == room).Select(c => c.Value).ToList();
+            return _repository.Where(c => c.User == user && c.Room == room).Select(c => c).FirstOrDefault();
+        }
+
+        public List<string> GetCurrentlyTyping(string room)
+        {
+            return _repository.Where(c => c.Room == room).Select(c => c.User).ToList();
         }
     }
 }

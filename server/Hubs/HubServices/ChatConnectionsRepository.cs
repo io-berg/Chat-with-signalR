@@ -5,41 +5,46 @@ namespace server.Hubs.HubServices
 {
     public class ChatConnectionsRepository
     {
-        IDictionary<string, UserConnection> _connections;
+        List<UserConnection> _connections;
 
         public ChatConnectionsRepository()
         {
-            _connections = new Dictionary<string, UserConnection>();
+            _connections = new List<UserConnection>();
         }
 
-        public void Add(string connectionId, UserConnection userConnection)
+        public void Add(UserConnection userConnection)
         {
-            _connections.Add(connectionId, userConnection);
+            _connections.Add(userConnection);
         }
 
-        public void Remove(string connectionId)
+        public void Remove(UserConnection userConnection)
         {
-            _connections.Remove(connectionId);
+            _connections.Remove(userConnection);
         }
 
         public List<string> GetRoomUsers(string room)
         {
-            return _connections.Where(c => c.Value.Room == room).Select(c => c.Value.User).ToList();
+            return _connections.Where(c => c.Room == room).Select(c => c.User).ToList();
         }
 
-        public bool GetUser(string connectionId, out UserConnection userConnection)
+        public UserConnection GetConnection(string user, string room)
         {
-            return _connections.TryGetValue(connectionId, out userConnection);
+            return _connections.Where(c => c.User == user && c.Room == room).Select(c => c).FirstOrDefault();
         }
 
-        public bool IsConnectedToRoom(string username, string room)
+        public bool IsConnectedToRoom(string user, string room)
         {
-            return _connections.Any(c => c.Value.User == username && c.Value.Room == room);
+            return _connections.Where(c => c.User == user && c.Room == room).Select(c => c).Any();
+        }
+
+        public List<UserConnection> GetUserConnectedRooms(string username)
+        {
+            return _connections.Where(c => c.User == username).Select(c => c).ToList();
         }
 
         public List<RoomInfo> GetRoomInfosAsync(int count = 10)
         {
-            var rooms = _connections.Values.GroupBy(c => c.Room)
+            var rooms = _connections.GroupBy(c => c.Room)
                 .Select(c => new RoomInfo { Room = c.Key, Users = c.Count() })
                 .OrderByDescending(r => r.Users)
                 .Take(count);

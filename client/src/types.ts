@@ -34,14 +34,22 @@ export interface IMessage {
   message: string;
 }
 
+export interface IOpenRoom {
+  room: string;
+  users: string[];
+  messages: IMessage[];
+  typingUsers: string[];
+}
+
 export interface IMessageContainerProps {
   messages: IMessage[];
 }
 
 export interface ISendMessageFormProps {
-  sendMessage: (message: string) => Promise<void>;
-  startTyping: () => void;
-  stopTyping: () => void;
+  sendMessage: (message: string, room: string) => Promise<void>;
+  startTyping: (room: string) => void;
+  stopTyping: (room: string) => void;
+  room: string;
 }
 
 export interface IConnectedUsersProps {
