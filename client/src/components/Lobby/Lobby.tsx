@@ -14,11 +14,11 @@ const Lobby: FC<ILobbyProps> = ({
   const [room, setRoom] = useState<string>("");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getRooms().then((rooms: IRoom[]) => {
-      setRooms(rooms);
-    });
-  }, []);
+  // useEffect(() => {
+  //   getRooms().then((rooms: IRoom[]) => {
+  //     setRooms(rooms);
+  //   });
+  // }, []);
 
   return (
     <div className="hero bg-base-200 full-height">

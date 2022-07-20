@@ -1,5 +1,4 @@
 using System.Text;
-using Hubs.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -53,9 +52,9 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters()
     {
         ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:ValidIssuer"],
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:ValidAudience"],
-        ValidIssuer = builder.Configuration["Jwt:ValidIssuer"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
     };
 
@@ -65,10 +64,12 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
 
+            // If the request is for our hub...
             var path = context.HttpContext.Request.Path;
             if (!string.IsNullOrEmpty(accessToken) &&
-                (path.StartsWithSegments("/chat")))
+                (path.StartsWithSegments("/hubs/chat")))
             {
+                // Read the token out of the query string
                 context.Token = accessToken;
             }
             return Task.CompletedTask;
@@ -76,7 +77,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -88,13 +92,13 @@ builder.Services.AddCors(options =>
         builder.AllowAnyHeader()
             .AllowAnyMethod()
             .WithOrigins("http://localhost:3000")
-            .AllowCredentials();
+            .AllowCredentials()
+            .AllowAnyHeader();
     });
 });
 
 builder.Services.AddSingleton<ChatConnectionsRepository>();
 builder.Services.AddSingleton<CurrentlyTypingRepository>();
-builder.Services.AddSingleton<NameUserIdProvider>();
 
 var app = builder.Build();
 

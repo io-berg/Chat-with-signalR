@@ -2,7 +2,11 @@ import { IAuthResponse, IRegisterErrorItem, IRegisterResult } from "../types";
 
 const BASEURL = "https://localhost:7278/api/auth/";
 
-const authenticate = async (username: string, password: string) => {
+const authenticate = async (
+  username: string,
+  password: string,
+  setToken: (token: string) => void
+) => {
   const URL = BASEURL + "Login";
   try {
     const response = await fetch(URL, {
@@ -19,6 +23,7 @@ const authenticate = async (username: string, password: string) => {
     if (response.status === 200) {
       data.then((data: IAuthResponse) => {
         console.log(data);
+        setToken(data.token);
         localStorage.setItem("token", data.token);
       });
       return true;
@@ -54,11 +59,7 @@ const registerAccount = async (
       };
       return goodResult;
     }
-
     const errors: IRegisterErrorItem[] = await response.json();
-
-    console.log(errors);
-
     const badResult: IRegisterResult = {
       success: false,
       errors: errors,
@@ -70,7 +71,7 @@ const registerAccount = async (
   }
 };
 
-const isAuthenticated = async () => {
+const isAuthenticated = async (setToken: (token: string) => void) => {
   const token = currentAuthToken();
   const URL = BASEURL + "IsAuthenticated";
 
@@ -84,6 +85,7 @@ const isAuthenticated = async () => {
   const result = await response;
   const data = await result.text();
   if (result.status === 200) {
+    setToken(token);
     return {
       user: data,
       isAuthenticated: true,

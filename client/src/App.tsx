@@ -17,6 +17,7 @@ import {
 } from "react-router-dom";
 import Lobby from "./components/Lobby/Lobby";
 import {
+  HttpTransportType,
   HubConnection,
   HubConnectionBuilder,
   JsonHubProtocol,
@@ -42,18 +43,21 @@ function App() {
   const [loggedInUser, setLoggedInUser] = useState<string>("");
   const [authStatus, setAuthStatus] = useState<boolean>(false);
   const [openRooms, setOpenRooms] = useState<IOpenRoom[]>([]);
+  const [accessToken, setAccessToken] = useState<string>("");
   const navigate = useNavigate();
 
   const joinChat = async () => {
-    if (connection) return;
-
     try {
       const connection = new HubConnectionBuilder()
         .withUrl("https://localhost:7278/hubs/chat", {
-          accessTokenFactory: () => currentAuthToken(),
+          accessTokenFactory: () => {
+            return accessToken;
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         })
         .configureLogging(LogLevel.Information)
-        .withAutomaticReconnect()
         .build();
 
       connection.on(
@@ -72,10 +76,10 @@ function App() {
         }
       );
 
-      // connection.onclose(() => {
-      //   setConnection(undefined);
-      //   setCurrentChat("");
-      // });
+      connection.onclose(() => {
+        setConnection(undefined);
+        setCurrentChat("");
+      });
 
       connection.on(
         "RecieveConnectedUsers",
@@ -118,12 +122,12 @@ function App() {
 
   const login = async (user: string, password: string) => {
     try {
-      const result = await authenticate(user, password);
-
+      const result = await authenticate(user, password, setAccessToken);
+      console.log(accessToken);
       if (result) {
         setLoggedInUser(user);
         setAuthStatus(true);
-        joinChat();
+        await joinChat();
         navigate("/Chat2");
       }
     } catch (e: any) {
@@ -216,7 +220,7 @@ function App() {
   };
 
   const tryLoginAuto = async () => {
-    const response = await isAuthenticated();
+    const response = await isAuthenticated(setAccessToken);
     if (response.isAuthenticated) {
       setLoggedInUser(response.user);
       setAuthStatus(true);

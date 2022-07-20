@@ -1,4 +1,4 @@
-using Hubs.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using server.Hubs.HubServices;
@@ -6,19 +6,17 @@ using server.Hubs.Models;
 
 namespace server.Hubs
 {
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ChatHub : Hub
     {
         private readonly string _botUser;
         private readonly ChatConnectionsRepository _connections;
         private readonly CurrentlyTypingRepository _currentlyTyping;
-        private readonly NameUserIdProvider _nameUserIdProvider;
 
-        public ChatHub(ChatConnectionsRepository connections, CurrentlyTypingRepository currentlyTyping, NameUserIdProvider nameUserIdProvider)
+        public ChatHub(ChatConnectionsRepository connections, CurrentlyTypingRepository currentlyTyping)
         {
             _connections = connections;
             _currentlyTyping = currentlyTyping;
-            _nameUserIdProvider = nameUserIdProvider;
             _botUser = "Bot";
         }
 
