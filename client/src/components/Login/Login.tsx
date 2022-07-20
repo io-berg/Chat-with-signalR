@@ -6,8 +6,8 @@ const Login: FC<ILoginProps> = ({ login }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const tryLogin = (username: string, password: string) => {
-    login(username, password);
+  const tryLogin = async (username: string, password: string) => {
+    await login(username, password); // NEEDS TO BE AWAITED OR TOKEN IS NOT SET BEFORE CONNECTING TO CHAT
   };
 
   return (

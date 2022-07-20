@@ -10,8 +10,10 @@ const AlertsContainer: FC<IAlertsConatinerProps> = ({
 
   const allertsList = (
     <div className="toast z-50 fixed top-0 right-0 mt-14 mr-2">
-      {alerts.map((alert) => (
-        <Alert alert={alert} removeAlert={removeAlert} />
+      {alerts.map((alert, index) => (
+        <div id={index.toString()}>
+          <Alert alert={alert} removeAlert={removeAlert} />
+        </div>
       ))}
     </div>
   );

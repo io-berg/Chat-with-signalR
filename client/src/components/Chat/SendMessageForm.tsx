@@ -1,19 +1,26 @@
-import React, { useState } from "react";
+import React, { FC, useState } from "react";
 import { ISendMessageFormProps } from "../../types";
 
-const SendMessageForm = (props: ISendMessageFormProps) => {
+const SendMessageForm: FC<ISendMessageFormProps> = ({
+  startTyping,
+  stopTyping,
+  sendMessage,
+  room,
+}) => {
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    e.preventDefault();
+
     if (e.target.value.length > 0) {
       if (isTyping === false) {
-        props.startTyping();
+        startTyping(room);
         setIsTyping(true);
       }
     }
     if (isTyping === true && e.target.value.length === 0) {
-      props.stopTyping();
+      stopTyping(room);
       setIsTyping(false);
     }
 
@@ -24,8 +31,9 @@ const SendMessageForm = (props: ISendMessageFormProps) => {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        props.sendMessage(message);
+        sendMessage(message, room);
         setMessage("");
+        setIsTyping(false);
       }}
       className="w-full mt-auto flex"
     >

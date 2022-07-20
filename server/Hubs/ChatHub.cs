@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using server.Hubs.HubServices;
 using server.Hubs.Models;
 
 namespace server.Hubs
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ChatHub : Hub
     {
         private readonly string _botUser;
@@ -14,64 +17,74 @@ namespace server.Hubs
         {
             _connections = connections;
             _currentlyTyping = currentlyTyping;
-            _botUser = "ChatBot";
+            _botUser = "Bot";
         }
 
-        public async Task JoinRoom(UserConnection connectionRequest)
+        public async Task JoinRoom(string room)
         {
-            if (_connections.IsConnectedToRoom(connectionRequest.User, connectionRequest.Room))
+            var user = Context.User.Identity.Name;
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, room);
+
+            _connections.Add(new UserConnection { User = user, Room = room });
+
+            await Clients.Group(room).SendAsync("RecieveMessage", _botUser, $"{user} has joined the room.");
+            await SendConnectedUsers(room);
+        }
+
+        public async Task LeaveRoom(string room)
+        {
+            var user = Context.User.Identity.Name;
+
+            if (!_connections.IsConnectedToRoom(user, room))
             {
-                await Clients.Caller.SendAsync("AlreadyConnected", connectionRequest.Room);
+                await Clients.Caller.SendAsync("NotConnected", room);
                 return;
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, connectionRequest.Room);
-
-            _connections.Add(Context.ConnectionId, connectionRequest);
-
-            await SendConnectedUsers(connectionRequest.Room);
-            await Clients.Group(connectionRequest.Room).SendAsync("RecieveMessage", _botUser, $"{connectionRequest.User} has joined the room {connectionRequest.Room}");
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, room);
+            _connections.Remove(_connections.GetConnection(user, room));
+            await SendConnectedUsers(room);
+            await Clients.Group(room).SendAsync("RecieveMessage", _botUser, $"{user} has left the room.");
         }
 
-        public async Task SendMessage(String message)
+        public async Task SendMessage(string message, string room)
         {
-            if (_connections.GetUser(Context.ConnectionId, out UserConnection userConnection))
-            {
-                await Clients.Group(userConnection.Room).SendAsync("RecieveMessage", userConnection.User, message);
-                await StopTyping();
-            }
+            var user = Context.User.Identity.Name;
+
+            await Clients.Group(room).SendAsync("RecieveMessage", user, message, room);
+            await StopTyping(room);
         }
 
-        public async Task IsTyping()
+        public async Task IsTyping(string room)
         {
-            if (_connections.GetUser(Context.ConnectionId, out UserConnection userConnection))
-            {
-                _currentlyTyping.Add(Context.ConnectionId, userConnection);
-
-                await SendCurrentlyTypingUsers(userConnection.Room);
-            }
+            var user = Context.User.Identity.Name;
+            _currentlyTyping.Add(new UserConnection { User = user, Room = room });
+            await SendCurrentlyTypingUsers(room);
         }
 
-        public async Task StopTyping()
+        public async Task StopTyping(string room)
         {
-            if (_connections.GetUser(Context.ConnectionId, out UserConnection userConnection))
-            {
-                _currentlyTyping.Remove(Context.ConnectionId);
+            var user = Context.User.Identity.Name;
 
-                await SendCurrentlyTypingUsers(userConnection.Room);
-            }
+            _currentlyTyping.Remove(_currentlyTyping.GetConnection(user, room));
+
+            await SendCurrentlyTypingUsers(room);
         }
 
         public override Task OnDisconnectedAsync(Exception exception)
         {
-            if (_connections.GetUser(Context.ConnectionId, out UserConnection userConnection))
+            var user = Context.User.Identity.Name;
+            var connectedRooms = _connections.GetUserConnectedRooms(user);
+
+            connectedRooms.ForEach(room =>
             {
-                _connections.Remove(Context.ConnectionId);
-                _currentlyTyping.Remove(Context.ConnectionId);
-                Clients.Group(userConnection.Room).SendAsync("RecieveMessage", _botUser, $"{userConnection.User} has left the room {userConnection.Room}");
-                SendConnectedUsers(userConnection.Room);
-                SendCurrentlyTypingUsers(userConnection.Room);
-            }
+                _connections.Remove(_connections.GetConnection(user, room.Room));
+                _currentlyTyping.Remove(_currentlyTyping.GetConnection(user, room.Room));
+                Clients.Group(room.Room).SendAsync("RecieveMessage", _botUser, $"{user} has left the room.");
+                SendConnectedUsers(room.Room);
+                SendCurrentlyTypingUsers(room.Room);
+            });
 
             return base.OnDisconnectedAsync(exception);
         }
@@ -79,13 +92,13 @@ namespace server.Hubs
         public Task SendConnectedUsers(string room)
         {
             var users = _connections.GetRoomUsers(room);
-            return Clients.Group(room).SendAsync("RecieveConnectedUsers", users);
+            return Clients.Group(room).SendAsync("RecieveConnectedUsers", users, room);
         }
 
         public Task SendCurrentlyTypingUsers(string room)
         {
             var users = _currentlyTyping.GetCurrentlyTyping(room);
-            return Clients.Group(room).SendAsync("RecieveTypingUsers", users);
+            return Clients.Group(room).SendAsync("RecieveTypingUsers", users, room);
         }
     }
 }

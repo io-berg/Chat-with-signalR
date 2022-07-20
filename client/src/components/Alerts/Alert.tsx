@@ -7,6 +7,7 @@ const Alert: FC<IAlertProps> = ({ alert, removeAlert }) => {
       className={`alert h-12 m-1 ${
         alert.type == "error" ? "alert-warning" : "alert-info"
       }`}
+      id={alert.id}
     >
       <div>
         <span>{alert.message}</span>
