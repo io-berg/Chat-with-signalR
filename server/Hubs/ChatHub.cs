@@ -24,18 +24,12 @@ namespace server.Hubs
         {
             var user = Context.User.Identity.Name;
 
-            if (_connections.IsConnectedToRoom(user, room))
-            {
-                await Clients.Caller.SendAsync("AlreadyConnected", room);
-                return;
-            }
-
             await Groups.AddToGroupAsync(Context.ConnectionId, room);
 
             _connections.Add(new UserConnection { User = user, Room = room });
 
-            await SendConnectedUsers(room);
             await Clients.Group(room).SendAsync("RecieveMessage", _botUser, $"{user} has joined the room.");
+            await SendConnectedUsers(room);
         }
 
         public async Task LeaveRoom(string room)

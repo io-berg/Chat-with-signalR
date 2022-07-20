@@ -3,6 +3,7 @@ import Footer from "./components/Footer";
 import { useEffect, useState } from "react";
 import {
   IAlert,
+  IAuthResponse,
   IOpenRoom,
   IRegisterErrorItem,
   IRegisterResult,
@@ -24,9 +25,7 @@ import {
   LogLevel,
 } from "@microsoft/signalr";
 import {
-  authenticate,
   clearAuthToken,
-  currentAuthToken,
   isAuthenticated,
   registerAccount,
 } from "./helpers/auth";
@@ -46,89 +45,49 @@ function App() {
   const [accessToken, setAccessToken] = useState<string>("");
   const navigate = useNavigate();
 
-  const joinChat = async () => {
+  const BASEURL = "https://localhost:7278/api/auth/";
+
+  const authenticate = async (username: string, password: string) => {
+    const URL = BASEURL + "Login";
     try {
-      const connection = new HubConnectionBuilder()
-        .withUrl("https://localhost:7278/hubs/chat", {
-          accessTokenFactory: () => {
-            return accessToken;
-          },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-        .configureLogging(LogLevel.Information)
-        .build();
-
-      connection.on(
-        "RecieveMessage",
-        (user: string, message: string, room: string) => {
-          console.log(user, message, room, "I RECIEVED A MSG");
-
-          setOpenRooms((prevOpenRooms) => {
-            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
-            if (roomIndex > -1) {
-              newOpenRooms[roomIndex].messages.push({ user, message });
-            }
-            return newOpenRooms;
-          });
-        }
-      );
-
-      connection.onclose(() => {
-        setConnection(undefined);
-        setCurrentChat("");
+      const response = await fetch(URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
       });
-
-      connection.on(
-        "RecieveConnectedUsers",
-        (users: string[], room: string) => {
-          setOpenRooms((prevOpenRooms) => {
-            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
-            if (roomIndex > -1) {
-              newOpenRooms[roomIndex].users = users;
-            }
-            return newOpenRooms;
-          });
-        }
-      );
-
-      connection.on("RecieveTypingUsers", (users: string[], room: string) => {
-        console.log(users, room, "I RECIEVED A TYPING MSG");
-
-        setOpenRooms((prevOpenRooms) => {
-          const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-          const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
-          if (roomIndex > -1) {
-            newOpenRooms[roomIndex].typingUsers = users;
-          }
-          return newOpenRooms;
-        });
-      });
-
-      // connection.on("AlreadyConnected", () => {
-      //   addAlert("warning", "You are already connected to this room");
-      // });
-
-      await connection.start();
-      setConnection(connection);
-    } catch (e: any) {
-      addAlert("error", e.message);
-      setConnection(undefined);
+      const data: IAuthResponse = await response.json();
+      if (response.status === 200) {
+        console.log(data);
+        localStorage.setItem("token", data.token);
+        return {
+          success: true,
+          token: data.token,
+        };
+      }
+      return {
+        success: false,
+        token: "",
+      };
+    } catch (error: any) {
+      throw new Error(error.message);
     }
   };
 
   const login = async (user: string, password: string) => {
     try {
-      const result = await authenticate(user, password, setAccessToken);
-      console.log(accessToken);
-      if (result) {
+      const result = await authenticate(user, password);
+      if (result.success) {
         setLoggedInUser(user);
         setAuthStatus(true);
-        await joinChat();
-        navigate("/Chat2");
+        if (result.token) {
+          setAccessToken(result.token);
+          navigate("/Chat2");
+        }
       }
     } catch (e: any) {
       e.foreach((e: any) => {
@@ -159,47 +118,11 @@ function App() {
     }
   };
 
-  const sendMessage = async (message: string, room: string) => {
-    try {
-      await connection?.invoke("SendMessage", message, room);
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  const startTyping = async (room: string) => {
-    try {
-      await connection?.invoke("IsTyping", room);
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  const stopTyping = async (room: string) => {
-    try {
-      await connection?.invoke("StopTyping", room);
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
   const closeConnection = async () => {
     try {
       await connection?.stop();
       setConnection(undefined);
       setCurrentChat("");
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  const leaveRoom = async (room: string) => {
-    console.log("LEAVING ROOM", room);
-    try {
-      await connection?.invoke("LeaveRoom", room);
-      setOpenRooms((openRooms) => {
-        return openRooms.filter((r) => r.room !== room);
-      });
     } catch (e) {
       console.log(e);
     }
@@ -220,11 +143,13 @@ function App() {
   };
 
   const tryLoginAuto = async () => {
-    const response = await isAuthenticated(setAccessToken);
-    if (response.isAuthenticated) {
+    const response = await isAuthenticated();
+    const token = localStorage.getItem("token");
+    if (response.isAuthenticated && token) {
+      console.log(token);
       setLoggedInUser(response.user);
       setAuthStatus(true);
-      joinChat();
+      setAccessToken(token);
       navigate("/chat2");
     }
   };
@@ -235,21 +160,6 @@ function App() {
     setLoggedInUser("");
     await closeConnection();
     navigate("/");
-  };
-
-  const joinRoom = async (room: string) => {
-    try {
-      await connection?.invoke("JoinRoom", room);
-      setCurrentChat(room);
-      setOpenRooms([
-        ...openRooms,
-        { room: room, users: [], messages: [], typingUsers: [] },
-      ]);
-
-      console.log(openRooms, "onJoin");
-    } catch (e) {
-      console.log(e);
-    }
   };
 
   useEffect(() => {
@@ -274,61 +184,20 @@ function App() {
           <Route
             path="/chat2"
             element={
-              <Chat2
-                currentRoom={currentChat}
-                setCurrentRoom={setCurrentChat}
-                openRooms={openRooms}
-                setOpenRooms={setOpenRooms}
-                joinRoom={joinRoom}
-                leaveRoom={leaveRoom}
-                joinChat={joinChat}
-                sendMessage={sendMessage}
-                startTyping={startTyping}
-                stopTyping={stopTyping}
-                currentUser={loggedInUser}
-              />
-            }
-          />
-          <Route
-            path="/lobby"
-            element={
               <ProtectedRoute
                 authStatus={authStatus}
                 outlet={
-                  <Lobby
-                    joinRoom={joinRoom}
-                    addAlert={addAlert}
-                    rooms={activeRoomsInfo}
-                    setRooms={setActiveRoomsInfo}
-                    loggedInUser={loggedInUser}
-                  />
-                }
-              />
-            }
-          />
-
-          {/* <Route
-            path="/chat/:room"
-            element={
-              <ProtectedRoute
-                authStatus={authStatus}
-                outlet={
-                  <Chat
-                    messages={messages}
-                    users={users}
-                    sendMessage={sendMessage}
-                    closeConnection={closeConnection}
-                    currentChat={currentChat}
-                    typingUsers={typingUsers}
-                    startTyping={startTyping}
-                    stopTyping={stopTyping}
-                    joinRoom={joinRoom}
+                  <Chat2
                     currentUser={loggedInUser}
+                    accessToken={accessToken}
+                    addAlert={addAlert}
+                    setConnection={setConnection}
+                    connection={connection}
                   />
                 }
               />
             }
-          /> */}
+          />
         </Routes>
       </main>
       <Footer />

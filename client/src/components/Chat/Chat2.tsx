@@ -1,3 +1,8 @@
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  LogLevel,
+} from "@microsoft/signalr";
 import { FC, useEffect, useState } from "react";
 import { IOpenRoom } from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
@@ -5,31 +10,159 @@ import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
 
 interface Chat2Props {
-  currentRoom: string;
-  setCurrentRoom: (chat: string) => void;
-  openRooms: IOpenRoom[];
-  setOpenRooms: (value: React.SetStateAction<IOpenRoom[]>) => void;
-  joinRoom: (room: string, user: string) => void;
-  leaveRoom: (room: string) => void;
-  joinChat: () => void;
-  sendMessage: (message: string, room: string) => Promise<void>;
-  startTyping: (room: string) => Promise<void>;
-  stopTyping: (room: string) => Promise<void>;
+  // currentRoom: string;
+  // setCurrentRoom: (chat: string) => void;
+  // openRooms: IOpenRoom[];
+  // setOpenRooms: (value: React.SetStateAction<IOpenRoom[]>) => void;
+  // joinRoom: (room: string, user: string) => void;
+  // leaveRoom: (room: string) => void;
+  // joinChat: () => void;
+  // sendMessage: (message: string, room: string) => Promise<void>;
+  // startTyping: (room: string) => Promise<void>;
+  // stopTyping: (room: string) => Promise<void>;
   currentUser: string;
+  accessToken: string;
+  addAlert: (type: string, message: string) => void;
+  setConnection: (connection: HubConnection | undefined) => void;
+  connection: HubConnection | undefined;
 }
 
 const Chat2: FC<Chat2Props> = ({
-  currentRoom,
-  openRooms,
-  joinRoom,
-  leaveRoom,
-  joinChat,
-  sendMessage,
-  startTyping,
-  stopTyping,
-  currentUser,
+  accessToken,
+  addAlert,
+  connection,
+  setConnection,
 }) => {
   const [roomToJoin, setRoomToJoin] = useState("");
+  const [openRooms, setOpenRooms] = useState<IOpenRoom[]>([]);
+  const [currentRoom, setCurrentRoom] = useState("");
+  const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
+
+  const joinChat = async () => {
+    try {
+      const connection = new HubConnectionBuilder()
+        .withUrl("https://localhost:7278/hubs/chat", {
+          accessTokenFactory: () => {
+            return accessToken;
+          },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+        .configureLogging(LogLevel.Information)
+        .build();
+
+      connection.on(
+        "RecieveMessage",
+        (user: string, message: string, room: string) => {
+          console.log(user, message, room, "I RECIEVED A MSG");
+
+          setOpenRooms((prevOpenRooms) => {
+            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            if (roomIndex > -1) {
+              newOpenRooms[roomIndex].messages.push({ user, message });
+            }
+            return newOpenRooms;
+          });
+        }
+      );
+
+      connection.onclose(() => {
+        setConnection(undefined);
+        setCurrentRoom("");
+      });
+
+      connection.on(
+        "RecieveConnectedUsers",
+        (users: string[], room: string) => {
+          console.log("I RECIEVED CONNECTED USERS", users, room);
+          setOpenRooms((prevOpenRooms) => {
+            const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            if (roomIndex > -1) {
+              newOpenRooms[roomIndex].users = users;
+            }
+            return newOpenRooms;
+          });
+        }
+      );
+
+      connection.on("RecieveTypingUsers", (users: string[], room: string) => {
+        console.log(users, room, "I RECIEVED A TYPING MSG");
+
+        setOpenRooms((prevOpenRooms) => {
+          const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+          const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+          if (roomIndex > -1) {
+            newOpenRooms[roomIndex].typingUsers = users;
+          }
+          return newOpenRooms;
+        });
+      });
+
+      connection.on("AlreadyConnected", () => {
+        addAlert("warning", "You are already connected to this room");
+      });
+
+      await connection.start();
+      setConnection(connection);
+    } catch (e: any) {
+      addAlert("error", e.message);
+      setConnection(undefined);
+    }
+  };
+
+  const sendMessage = async (message: string, room: string) => {
+    try {
+      await connection?.invoke("SendMessage", message, room);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const startTyping = async (room: string) => {
+    try {
+      await connection?.invoke("IsTyping", room);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const stopTyping = async (room: string) => {
+    try {
+      await connection?.invoke("StopTyping", room);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const leaveRoom = async (room: string) => {
+    console.log("LEAVING ROOM", room);
+    try {
+      await connection?.invoke("LeaveRoom", room);
+      setOpenRooms((openRooms) => {
+        return openRooms.filter((r) => r.room !== room);
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const joinRoom = async (room: string) => {
+    try {
+      setOpenRooms([
+        ...openRooms,
+        { room: room, users: [], messages: [], typingUsers: [] },
+      ]);
+      await connection?.invoke("JoinRoom", room);
+      setCurrentRoom(room);
+
+      console.log(openRooms, "onJoin");
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const currentlyTypingText = (typingUsers: string[]) => {
     const currentlyTyping: string = typingUsers.map((user) => user).join(", ");
@@ -45,9 +178,14 @@ const Chat2: FC<Chat2Props> = ({
 
   function handleSubmitJoinRoom(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    joinRoom(roomToJoin, currentUser);
+    joinRoom(roomToJoin);
     setRoomToJoin("");
+    setShowJoinRoomModal(false);
   }
+
+  useEffect(() => {
+    joinChat();
+  }, []);
 
   const tabs = openRooms.map((room) => {
     console.log(room);
@@ -58,6 +196,9 @@ const Chat2: FC<Chat2Props> = ({
         className={`tab tab-bordered tab-lg ${
           room.room === currentRoom ? "tab-active" : ""
         }`}
+        onClick={() => {
+          setCurrentRoom(room.room);
+        }}
       >
         {room.room}
         <button
@@ -89,7 +230,7 @@ const Chat2: FC<Chat2Props> = ({
         key={room.room}
         className={`${
           room.room === currentRoom ? "flex" : "hidden"
-        } flex flex-col p-5 full-height`}
+        } flex-col p-5 full-height`}
       >
         <div className="flex grow mb-2">
           <MessageContainer messages={room.messages} />
@@ -107,9 +248,14 @@ const Chat2: FC<Chat2Props> = ({
   });
 
   return (
-    <div className="flex flex-col full-height w-max">
+    <div className="flex flex-col full-height w-auto">
       <div className="flex w-max p-1 column">
-        <label htmlFor="joinRoomModal" className="btn modal-button">
+        <label
+          onClick={() => {
+            setShowJoinRoomModal(true);
+          }}
+          className="btn modal-button"
+        >
           Join Room
         </label>
         <div className="tabs flex w-max">{tabs}</div>
@@ -117,7 +263,13 @@ const Chat2: FC<Chat2Props> = ({
       {chatRooms}
       {/* JOIN ROOM MODAL  */}
       <input type="checkbox" id="joinRoomModal" className="modal-toggle" />
-      <label htmlFor="joinRoomModal" className="modal cursor-pointer">
+      <label
+        htmlFor="joinRoomModal"
+        className={`
+          modal cursor-pointer
+          ${showJoinRoomModal ? "modal-open" : ""}
+        `}
+      >
         <label className="modal-box relative">
           <form onSubmit={(e) => handleSubmitJoinRoom(e)}>
             <h3 className="text-lg font-bold mb-4">
