@@ -16,14 +16,7 @@ import {
   Routes,
   useNavigate,
 } from "react-router-dom";
-import Lobby from "./components/Lobby/Lobby";
-import {
-  HttpTransportType,
-  HubConnection,
-  HubConnectionBuilder,
-  JsonHubProtocol,
-  LogLevel,
-} from "@microsoft/signalr";
+import { HubConnection } from "@microsoft/signalr";
 import {
   clearAuthToken,
   isAuthenticated,
@@ -32,16 +25,13 @@ import {
 import Login from "./components/Login/Login";
 import { ProtectedRoute } from "./components/Auth/ProtectedRoute.js";
 import Register from "./components/Register/Register.js";
-import Chat2 from "./components/Chat/Chat2.js";
+import Chat from "./components/Chat/Chat.js";
 
 function App() {
   const [alerts, setAlerts] = useState<IAlert[]>([]);
   const [connection, setConnection] = useState<HubConnection>();
-  const [currentChat, setCurrentChat] = useState<string>("");
-  const [activeRoomsInfo, setActiveRoomsInfo] = useState<IRoom[]>([]);
   const [loggedInUser, setLoggedInUser] = useState<string>("");
   const [authStatus, setAuthStatus] = useState<boolean>(false);
-  const [openRooms, setOpenRooms] = useState<IOpenRoom[]>([]);
   const [accessToken, setAccessToken] = useState<string>("");
   const navigate = useNavigate();
 
@@ -86,7 +76,7 @@ function App() {
         setAuthStatus(true);
         if (result.token) {
           setAccessToken(result.token);
-          navigate("/Chat2");
+          navigate("/Chat");
         }
       }
     } catch (e: any) {
@@ -122,7 +112,6 @@ function App() {
     try {
       await connection?.stop();
       setConnection(undefined);
-      setCurrentChat("");
     } catch (e) {
       console.log(e);
     }
@@ -150,7 +139,7 @@ function App() {
       setLoggedInUser(response.user);
       setAuthStatus(true);
       setAccessToken(token);
-      navigate("/chat2");
+      navigate("/chat");
     }
   };
 
@@ -182,12 +171,12 @@ function App() {
             element={<Register register={register} addAlert={addAlert} />}
           />
           <Route
-            path="/chat2"
+            path="/chat"
             element={
               <ProtectedRoute
                 authStatus={authStatus}
                 outlet={
-                  <Chat2
+                  <Chat
                     currentUser={loggedInUser}
                     accessToken={accessToken}
                     addAlert={addAlert}
