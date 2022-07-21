@@ -1,10 +1,4 @@
-export interface ILobbyProps {
-  joinRoom: (room: string, user: string) => Promise<void>;
-  addAlert: (type: string, message: string) => void;
-  rooms: IRoom[];
-  setRooms: (rooms: IRoom[]) => void;
-  loggedInUser: string;
-}
+import { HubConnection } from "@microsoft/signalr";
 
 export interface IRoom {
   room: string;
@@ -14,19 +8,6 @@ export interface IRoom {
 export interface IUserConnection {
   user: string;
   room: string;
-}
-
-export interface IChatProps {
-  messages: IMessage[];
-  users: string[];
-  currentUser: string;
-  sendMessage: (message: string) => Promise<void>;
-  closeConnection: () => void;
-  currentChat: string;
-  typingUsers: IUserConnection[];
-  startTyping: () => void;
-  stopTyping: () => void;
-  joinRoom: (room: string, user: string) => Promise<void>;
 }
 
 export interface IMessage {
@@ -39,6 +20,14 @@ export interface IOpenRoom {
   users: string[];
   messages: IMessage[];
   typingUsers: string[];
+}
+
+export interface IChatProps {
+  currentUser: string;
+  accessToken: string;
+  addAlert: (type: string, message: string) => void;
+  setConnection: (connection: HubConnection | undefined) => void;
+  connection: HubConnection | undefined;
 }
 
 export interface IMessageContainerProps {
