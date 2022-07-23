@@ -2,38 +2,6 @@ import { IAuthResponse, IRegisterErrorItem, IRegisterResult } from "../types";
 
 const BASEURL = "https://localhost:7278/api/auth/";
 
-// const authenticate = async (
-//   username: string,
-//   password: string,
-//   setToken: (token: string) => void
-// ) => {
-//   const URL = BASEURL + "Login";
-//   try {
-//     const response = await fetch(URL, {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         username,
-//         password,
-//       }),
-//     });
-//     const data: Promise<IAuthResponse> = response.json();
-//     if (response.status === 200) {
-//       data.then((data: IAuthResponse) => {
-//         console.log(data);
-//         setToken(data.token);
-//         localStorage.setItem("token", data.token);
-//       });
-//       return true;
-//     }
-//     return false;
-//   } catch (error: any) {
-//     throw new Error(error.message);
-//   }
-// };
-
 const registerAccount = async (
   email: string,
   username: string,

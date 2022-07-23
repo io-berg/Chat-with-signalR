@@ -24,6 +24,9 @@ namespace server.Hubs
         {
             var user = Context.User.Identity.Name;
 
+            if (_connections.IsConnectedToRoom(user, room))
+                await Clients.Caller.SendAsync("AlreadyConnectedToRoom", room);
+
             await Groups.AddToGroupAsync(Context.ConnectionId, room);
 
             _connections.Add(new UserConnection { User = user, Room = room });
