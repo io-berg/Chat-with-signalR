@@ -1,5 +1,10 @@
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { FC, useEffect, useState } from "react";
+import {
+  addRoomToLocalStorage,
+  getRoomsFromLocalStorage,
+  removeRoomFromLocalStorage,
+} from "../../helpers/localStorageService";
 import { IChatProps, IOpenRoom } from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
 import MessageContainer from "./MessageContainer";
@@ -79,8 +84,9 @@ const Chat: FC<IChatProps> = ({
         });
       });
 
-      connection.on("AlreadyConnected", () => {
+      connection.on("AlreadyConnectedToRoom", (room: string) => {
         addAlert("warning", "You are already connected to this room");
+        setCurrentRoom(room);
       });
 
       await connection.start();
@@ -116,12 +122,9 @@ const Chat: FC<IChatProps> = ({
   };
 
   const leaveRoom = async (room: string) => {
-    console.log("LEAVING ROOM", room);
     try {
       await connection?.invoke("LeaveRoom", room);
-      setOpenRooms((openRooms) => {
-        return openRooms.filter((r) => r.room !== room);
-      });
+      removeOpenRoom(room);
     } catch (e) {
       console.log(e);
     }
@@ -129,14 +132,9 @@ const Chat: FC<IChatProps> = ({
 
   const joinRoom = async (room: string) => {
     try {
-      setOpenRooms([
-        ...openRooms,
-        { room: room, users: [], messages: [], typingUsers: [] },
-      ]);
+      addOpenRoom(room);
       await connection?.invoke("JoinRoom", room);
       setCurrentRoom(room);
-
-      console.log(openRooms, "onJoin");
     } catch (e) {
       console.log(e);
     }
@@ -161,13 +159,36 @@ const Chat: FC<IChatProps> = ({
     setShowJoinRoomModal(false);
   }
 
+  const addOpenRoom = (room: string) => {
+    if (!openRooms.find((c) => c.room === room)) {
+      setOpenRooms([
+        ...openRooms,
+        { room: room, users: [], messages: [], typingUsers: [] },
+      ]);
+      addRoomToLocalStorage(room);
+    }
+  };
+
+  const removeOpenRoom = (room: string) => {
+    setOpenRooms((openRooms) => {
+      return openRooms.filter((r) => r.room !== room);
+    });
+    removeRoomFromLocalStorage(room);
+  };
+
   useEffect(() => {
     joinChat();
   }, []);
 
-  const tabs = openRooms.map((room) => {
-    console.log(room);
+  useEffect(() => {
+    if (connection) {
+      getRoomsFromLocalStorage().forEach((room: string) => {
+        joinRoom(room);
+      });
+    }
+  }, [connection]);
 
+  const tabs = openRooms.map((room) => {
     return (
       <a
         key={room.room}

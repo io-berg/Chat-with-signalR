@@ -14,7 +14,8 @@ namespace server.Hubs.HubServices
 
         public void Add(UserConnection userConnection)
         {
-            _connections.Add(userConnection);
+            if (!_connections.Any(x => x.User == userConnection.User && x.Room == userConnection.Room))
+                _connections.Add(userConnection);
         }
 
         public void Remove(UserConnection userConnection)

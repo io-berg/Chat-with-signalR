@@ -12,7 +12,7 @@ const getRooms = async () => {
       Authorization: `Bearer ${currentAuthToken()}`,
     },
   });
-  const data = response.json();
+  const data: IRoom = await response.json();
 
   if (response.status === 200) {
     return data;
