@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using server.Data.Models.Chat;
 using server.Hubs.HubServices;
 using server.Hubs.Models;
+using server.Services;
 
 namespace server.Hubs
 {
@@ -12,12 +14,14 @@ namespace server.Hubs
         private readonly string _botUser;
         private readonly ChatConnectionsRepository _connections;
         private readonly CurrentlyTypingRepository _currentlyTyping;
+        private readonly HistoryService _historyService;
 
-        public ChatHub(ChatConnectionsRepository connections, CurrentlyTypingRepository currentlyTyping)
+        public ChatHub(ChatConnectionsRepository connections, CurrentlyTypingRepository currentlyTyping, HistoryService historyService)
         {
             _connections = connections;
             _currentlyTyping = currentlyTyping;
-            _botUser = "Bot";
+            _historyService = historyService;
+            _botUser = "bot";
         }
 
         public async Task JoinRoom(string room)
@@ -33,6 +37,7 @@ namespace server.Hubs
 
             await Clients.Group(room).SendAsync("RecieveMessage", _botUser, $"{user} has joined the room.");
             await SendConnectedUsers(room);
+            await Clients.Caller.SendAsync("RecieveChatHistory", await _historyService.GetRoomHistoryAsync(room), room);
         }
 
         public async Task LeaveRoom(string room)
@@ -57,6 +62,8 @@ namespace server.Hubs
 
             await Clients.Group(room).SendAsync("RecieveMessage", user, message, room);
             await StopTyping(room);
+
+            await _historyService.SaveRoomMessage(room, user, message);
         }
 
         public async Task IsTyping(string room)

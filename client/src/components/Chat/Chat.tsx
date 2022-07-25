@@ -5,7 +5,7 @@ import {
   getRoomsFromLocalStorage,
   removeRoomFromLocalStorage,
 } from "../../helpers/localStorageService";
-import { IChatProps, IOpenRoom } from "../../types";
+import { IChatProps, IMessage, IOpenRoom } from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
@@ -38,8 +38,6 @@ const Chat: FC<IChatProps> = ({
       connection.on(
         "RecieveMessage",
         (user: string, message: string, room: string) => {
-          console.log(user, message, room, "I RECIEVED A MSG");
-
           setOpenRooms((prevOpenRooms) => {
             const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
             const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
@@ -51,6 +49,23 @@ const Chat: FC<IChatProps> = ({
         }
       );
 
+      connection.on(
+        "RecieveChatHistory",
+        (history: IMessage[], room: string) => {
+          console.log(history);
+          if (history.length > 0) {
+            setOpenRooms((prevOpenRooms) => {
+              const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
+              const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+              if (roomIndex > -1) {
+                newOpenRooms[roomIndex].messages = history;
+              }
+              return newOpenRooms;
+            });
+          }
+        }
+      );
+
       connection.onclose(() => {
         setConnection(undefined);
         setCurrentRoom("");
@@ -59,7 +74,6 @@ const Chat: FC<IChatProps> = ({
       connection.on(
         "RecieveConnectedUsers",
         (users: string[], room: string) => {
-          console.log("I RECIEVED CONNECTED USERS", users, room);
           setOpenRooms((prevOpenRooms) => {
             const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
             const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
@@ -72,8 +86,6 @@ const Chat: FC<IChatProps> = ({
       );
 
       connection.on("RecieveTypingUsers", (users: string[], room: string) => {
-        console.log(users, room, "I RECIEVED A TYPING MSG");
-
         setOpenRooms((prevOpenRooms) => {
           const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
           const roomIndex = newOpenRooms.findIndex((c) => c.room === room);

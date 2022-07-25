@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import {
   IAlert,
   IAuthResponse,
-  IOpenRoom,
   IRegisterErrorItem,
   IRegisterResult,
-  IRoom,
 } from "./types";
 import {
   BrowserRouter as Router,
@@ -96,7 +94,7 @@ function App() {
 
       if (result.success) {
         addAlert("success", "Account created successfully");
-        navigate("/lobby/");
+        navigate("/");
         return;
       }
 
