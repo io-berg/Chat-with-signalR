@@ -5,7 +5,7 @@
 - Clone the project:
 
   ```bash
-  git clone https://github.com/io-berg/Chat-with-signalR.git_
+  git clone https://github.com/io-berg/Chat-with-signalR.git
   ```
 
 - Install Dependencies:
