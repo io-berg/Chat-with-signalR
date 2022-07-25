@@ -1,14 +1,13 @@
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server.Data;
 using server.Data.Models.auth;
 using server.Hubs;
 using server.Hubs.HubServices;
+using server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,6 +98,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<ChatConnectionsRepository>();
 builder.Services.AddSingleton<CurrentlyTypingRepository>();
+builder.Services.AddScoped<HistoryService>();
 
 var app = builder.Build();
 

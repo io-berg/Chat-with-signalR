@@ -1,9 +1,7 @@
-using Duende.IdentityServer.EntityFramework.Options;
-using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using server.Data.Models.auth;
+using server.Data.Models.Chat;
 
 namespace server.Data
 {
@@ -12,5 +10,8 @@ namespace server.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
+
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<Conversation> Conversations { get; set; }
     }
 }
