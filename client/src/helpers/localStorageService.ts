@@ -1,11 +1,14 @@
-const addRoomToLocalStorage = (room: string) => {
+import { ISavedRoom } from "../types";
+
+const addRoomToLocalStorage = (room: string, type: string) => {
+  const newRoom = { room, type };
   const rooms = getRoomsFromLocalStorage();
-  if (rooms.includes(room)) return;
-  rooms.push(room);
+  if (rooms.includes(newRoom)) return;
+  rooms.push(newRoom);
   localStorage.setItem("rooms", JSON.stringify(rooms));
 };
 
-const getRoomsFromLocalStorage = (): string[] => {
+const getRoomsFromLocalStorage = (): ISavedRoom[] => {
   const rooms = localStorage.getItem("rooms");
   if (rooms) {
     return JSON.parse(rooms);
@@ -14,8 +17,10 @@ const getRoomsFromLocalStorage = (): string[] => {
 };
 
 const removeRoomFromLocalStorage = (room: string) => {
-  const rooms: string[] = getRoomsFromLocalStorage();
-  const newRooms: string[] = rooms.filter((r: string) => r !== room);
+  const rooms: ISavedRoom[] = getRoomsFromLocalStorage();
+  const newRooms: ISavedRoom[] = rooms.filter(
+    (r: ISavedRoom) => r.room !== room
+  );
   localStorage.setItem("rooms", JSON.stringify(newRooms));
 };
 

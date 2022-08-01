@@ -10,6 +10,11 @@ export interface IUserConnection {
   room: string;
 }
 
+export interface ISavedRoom {
+  room: string;
+  type: string;
+}
+
 export interface IMessage {
   user: string;
   message: string;

@@ -5,7 +5,7 @@ import {
   getRoomsFromLocalStorage,
   removeRoomFromLocalStorage,
 } from "../../helpers/localStorageService";
-import { IChatProps, IMessage, IOpenRoom } from "../../types";
+import { IChatProps, IMessage, IOpenRoom, ISavedRoom } from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
@@ -15,11 +15,13 @@ const Chat: FC<IChatProps> = ({
   addAlert,
   connection,
   setConnection,
+  currentUser,
 }) => {
   const [roomToJoin, setRoomToJoin] = useState("");
   const [openRooms, setOpenRooms] = useState<IOpenRoom[]>([]);
   const [currentRoom, setCurrentRoom] = useState("");
   const [showJoinRoomModal, setShowJoinRoomModal] = useState(false);
+  const [joinRoomType, setJoinRoomType] = useState("open");
 
   const joinChat = async () => {
     try {
@@ -142,11 +144,25 @@ const Chat: FC<IChatProps> = ({
     }
   };
 
-  const joinRoom = async (room: string) => {
+  const joinRoom = async (room: string, joinType: string) => {
     try {
-      addOpenRoom(room);
-      await connection?.invoke("JoinRoom", room);
-      setCurrentRoom(room);
+      if (joinType === "open") {
+        addOpenRoom(room, joinType);
+        await connection?.invoke("JoinRoom", room);
+        setCurrentRoom(room);
+      }
+
+      if (joinType === "dm") {
+        addOpenRoom(currentUser + " " + room, joinType);
+        await connection?.invoke("OpenDM", currentUser + " " + room);
+        setCurrentRoom(currentUser + " " + room);
+      }
+
+      if (joinType === "private") {
+        addOpenRoom(room, joinType);
+        await connection?.invoke("JoinRoom", room);
+        setCurrentRoom(room);
+      }
     } catch (e) {
       console.log(e);
     }
@@ -166,18 +182,19 @@ const Chat: FC<IChatProps> = ({
 
   function handleSubmitJoinRoom(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    joinRoom(roomToJoin);
+    joinRoom(roomToJoin, joinRoomType);
     setRoomToJoin("");
+    setJoinRoomType("open");
     setShowJoinRoomModal(false);
   }
 
-  const addOpenRoom = (room: string) => {
+  const addOpenRoom = (room: string, type: string) => {
     if (!openRooms.find((c) => c.room === room)) {
       setOpenRooms([
         ...openRooms,
         { room: room, users: [], messages: [], typingUsers: [] },
       ]);
-      addRoomToLocalStorage(room);
+      addRoomToLocalStorage(room, type);
     }
   };
 
@@ -194,8 +211,8 @@ const Chat: FC<IChatProps> = ({
 
   useEffect(() => {
     if (connection) {
-      getRoomsFromLocalStorage().forEach((room: string) => {
-        joinRoom(room);
+      getRoomsFromLocalStorage().forEach((room: ISavedRoom) => {
+        joinRoom(room.room, room.type);
       });
     }
   }, [connection]);
@@ -286,6 +303,42 @@ const Chat: FC<IChatProps> = ({
             <h3 className="text-lg font-bold mb-4">
               Enter the name of the room you want to join
             </h3>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Open Room</span>
+                <input
+                  type="radio"
+                  name="join-radio"
+                  className="radio checked:bg-green-500"
+                  value="open"
+                  onChange={() => setJoinRoomType("open")}
+                />
+              </label>
+            </div>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Private Room</span>
+                <input
+                  type="radio"
+                  name="join-radio"
+                  className="radio checked:bg-blue-500"
+                  value="private"
+                  onChange={() => setJoinRoomType("private")}
+                />
+              </label>
+            </div>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">DM</span>
+                <input
+                  type="radio"
+                  name="join-radio"
+                  className="radio checked:bg-red-500"
+                  value="dm"
+                  onChange={() => setJoinRoomType("dm")}
+                />
+              </label>
+            </div>
             <div className="form-control">
               <input
                 type="text"
