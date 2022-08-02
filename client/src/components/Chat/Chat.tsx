@@ -5,7 +5,13 @@ import {
   getRoomsFromLocalStorage,
   removeRoomFromLocalStorage,
 } from "../../helpers/localStorageService";
-import { IChatProps, IMessage, IOpenRoom, ISavedRoom } from "../../types";
+import {
+  IChatProps,
+  IConversation,
+  IMessage,
+  IOpenRoom,
+  ISavedRoom,
+} from "../../types";
 import ConnectedUsers from "./ConnecterUsers";
 import MessageContainer from "./MessageContainer";
 import SendMessageForm from "./SendMessageForm";
@@ -40,9 +46,16 @@ const Chat: FC<IChatProps> = ({
       connection.on(
         "RecieveMessage",
         (user: string, message: string, room: string) => {
+          console.log(user, message, room, "RecieveMessage");
+
           setOpenRooms((prevOpenRooms) => {
             const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            let roomIndex;
+            if (room.length > 15) {
+              roomIndex = newOpenRooms.findIndex((c) => c.id === room);
+            } else {
+              roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            }
             if (roomIndex > -1) {
               newOpenRooms[roomIndex].messages.push({ user, message });
             }
@@ -54,7 +67,6 @@ const Chat: FC<IChatProps> = ({
       connection.on(
         "RecieveChatHistory",
         (history: IMessage[], room: string) => {
-          console.log(history);
           if (history.length > 0) {
             setOpenRooms((prevOpenRooms) => {
               const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
@@ -68,6 +80,25 @@ const Chat: FC<IChatProps> = ({
         }
       );
 
+      connection.on("RecieveOpenDMResponse", (conversation: IConversation) => {
+        console.log(conversation);
+
+        const recipient =
+          conversation.userOne === currentUser
+            ? conversation.userTwo
+            : conversation.userOne;
+
+        const room: IOpenRoom = {
+          room: recipient,
+          messages: conversation.messages ? conversation.messages : [],
+          id: conversation.id,
+          users: [conversation.userOne, conversation.userTwo],
+          typingUsers: [],
+        };
+
+        setOpenRooms((prevOpenRooms) => [...prevOpenRooms, room]);
+      });
+
       connection.onclose(() => {
         setConnection(undefined);
         setCurrentRoom("");
@@ -78,7 +109,12 @@ const Chat: FC<IChatProps> = ({
         (users: string[], room: string) => {
           setOpenRooms((prevOpenRooms) => {
             const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-            const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            let roomIndex;
+            if (room.length > 15) {
+              roomIndex = newOpenRooms.findIndex((c) => c.id === room);
+            } else {
+              roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+            }
             if (roomIndex > -1) {
               newOpenRooms[roomIndex].users = users;
             }
@@ -90,7 +126,12 @@ const Chat: FC<IChatProps> = ({
       connection.on("RecieveTypingUsers", (users: string[], room: string) => {
         setOpenRooms((prevOpenRooms) => {
           const newOpenRooms: IOpenRoom[] = [...prevOpenRooms];
-          const roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+          let roomIndex;
+          if (room.length > 15) {
+            roomIndex = newOpenRooms.findIndex((c) => c.id === room);
+          } else {
+            roomIndex = newOpenRooms.findIndex((c) => c.room === room);
+          }
           if (roomIndex > -1) {
             newOpenRooms[roomIndex].typingUsers = users;
           }
@@ -111,25 +152,25 @@ const Chat: FC<IChatProps> = ({
     }
   };
 
-  const sendMessage = async (message: string, room: string) => {
+  const sendMessage = async (message: string, room: string, id?: string) => {
     try {
-      await connection?.invoke("SendMessage", message, room);
+      await connection?.invoke("SendMessage", message, room, id);
     } catch (e) {
       console.log(e);
     }
   };
 
-  const startTyping = async (room: string) => {
+  const startTyping = async (room: string, id?: string) => {
     try {
-      await connection?.invoke("IsTyping", room);
+      await connection?.invoke("IsTyping", room, id);
     } catch (e) {
       console.log(e);
     }
   };
 
-  const stopTyping = async (room: string) => {
+  const stopTyping = async (room: string, id?: string) => {
     try {
-      await connection?.invoke("StopTyping", room);
+      await connection?.invoke("StopTyping", room, id);
     } catch (e) {
       console.log(e);
     }
@@ -144,7 +185,7 @@ const Chat: FC<IChatProps> = ({
     }
   };
 
-  const joinRoom = async (room: string, joinType: string) => {
+  const joinRoom = async (room: string, joinType: string, id?: string) => {
     try {
       if (joinType === "open") {
         addOpenRoom(room, joinType);
@@ -153,15 +194,7 @@ const Chat: FC<IChatProps> = ({
       }
 
       if (joinType === "dm") {
-        addOpenRoom(currentUser + " " + room, joinType);
-        await connection?.invoke("OpenDM", currentUser + " " + room);
-        setCurrentRoom(currentUser + " " + room);
-      }
-
-      if (joinType === "private") {
-        addOpenRoom(room, joinType);
-        await connection?.invoke("JoinRoom", room);
-        setCurrentRoom(room);
+        await connection?.invoke("OpenDM", room);
       }
     } catch (e) {
       console.log(e);
@@ -188,13 +221,13 @@ const Chat: FC<IChatProps> = ({
     setShowJoinRoomModal(false);
   }
 
-  const addOpenRoom = (room: string, type: string) => {
+  const addOpenRoom = (room: string, type: string, id?: string) => {
     if (!openRooms.find((c) => c.room === room)) {
       setOpenRooms([
         ...openRooms,
-        { room: room, users: [], messages: [], typingUsers: [] },
+        { room: room, users: [], messages: [], typingUsers: [], id: id },
       ]);
-      addRoomToLocalStorage(room, type);
+      if (type === "open") addRoomToLocalStorage(room, type);
     }
   };
 
@@ -269,7 +302,7 @@ const Chat: FC<IChatProps> = ({
           sendMessage={sendMessage}
           startTyping={startTyping}
           stopTyping={stopTyping}
-          room={room.room}
+          room={room}
         />
       </div>
     );
@@ -301,7 +334,10 @@ const Chat: FC<IChatProps> = ({
         <label className="modal-box relative">
           <form onSubmit={(e) => handleSubmitJoinRoom(e)}>
             <h3 className="text-lg font-bold mb-4">
-              Enter the name of the room you want to join
+              Enter the name of the{" "}
+              {joinRoomType == "dm"
+                ? "User you wish to open chat with"
+                : "Room you wish to join"}
             </h3>
             <div className="form-control">
               <label className="label cursor-pointer">
@@ -312,18 +348,6 @@ const Chat: FC<IChatProps> = ({
                   className="radio checked:bg-green-500"
                   value="open"
                   onChange={() => setJoinRoomType("open")}
-                />
-              </label>
-            </div>
-            <div className="form-control">
-              <label className="label cursor-pointer">
-                <span className="label-text">Private Room</span>
-                <input
-                  type="radio"
-                  name="join-radio"
-                  className="radio checked:bg-blue-500"
-                  value="private"
-                  onChange={() => setJoinRoomType("private")}
                 />
               </label>
             </div>
@@ -342,7 +366,7 @@ const Chat: FC<IChatProps> = ({
             <div className="form-control">
               <input
                 type="text"
-                placeholder="room"
+                placeholder={joinRoomType === "dm" ? "User" : "Room"}
                 className="input input-bordered"
                 onChange={(e) => setRoomToJoin(e.target.value)}
               />
@@ -353,7 +377,7 @@ const Chat: FC<IChatProps> = ({
                 type="submit"
                 disabled={!roomToJoin}
               >
-                Join
+                Open
               </button>
             </div>
           </form>

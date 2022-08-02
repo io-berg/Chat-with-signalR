@@ -171,8 +171,7 @@ namespace server.Migrations
                 name: "Conversations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
                     UserOneId = table.Column<string>(type: "TEXT", nullable: true),
                     UserTwoId = table.Column<string>(type: "TEXT", nullable: true)
                 },
@@ -200,6 +199,7 @@ namespace server.Migrations
                     Message = table.Column<string>(type: "TEXT", nullable: true),
                     UserId = table.Column<string>(type: "TEXT", nullable: true),
                     Time = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ConversationId = table.Column<string>(type: "TEXT", nullable: true),
                     RoomId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
@@ -209,6 +209,11 @@ namespace server.Migrations
                         name: "FK_ChatMessage_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ChatMessage_Conversations_ConversationId",
+                        column: x => x.ConversationId,
+                        principalTable: "Conversations",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_ChatMessage_Rooms_RoomId",
@@ -255,6 +260,11 @@ namespace server.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ChatMessage_ConversationId",
+                table: "ChatMessage",
+                column: "ConversationId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ChatMessage_RoomId",
                 table: "ChatMessage",
                 column: "RoomId");
@@ -296,10 +306,10 @@ namespace server.Migrations
                 name: "ChatMessage");
 
             migrationBuilder.DropTable(
-                name: "Conversations");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "Conversations");
 
             migrationBuilder.DropTable(
                 name: "Rooms");

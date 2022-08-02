@@ -15,12 +15,12 @@ const SendMessageForm: FC<ISendMessageFormProps> = ({
 
     if (e.target.value.length > 0) {
       if (isTyping === false) {
-        startTyping(room);
+        startTyping(room.room, room.id);
         setIsTyping(true);
       }
     }
     if (isTyping === true && e.target.value.length === 0) {
-      stopTyping(room);
+      stopTyping(room.room, room.id);
       setIsTyping(false);
     }
 
@@ -31,7 +31,7 @@ const SendMessageForm: FC<ISendMessageFormProps> = ({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        sendMessage(message, room);
+        sendMessage(message, room.room, room.id);
         setMessage("");
         setIsTyping(false);
       }}

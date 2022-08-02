@@ -215,6 +215,9 @@ namespace server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ConversationId")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Message")
                         .HasColumnType("TEXT");
 
@@ -229,6 +232,8 @@ namespace server.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ConversationId");
+
                     b.HasIndex("RoomId");
 
                     b.HasIndex("UserId");
@@ -238,9 +243,8 @@ namespace server.Migrations
 
             modelBuilder.Entity("server.Data.Models.Chat.Conversation", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UserOneId")
                         .HasColumnType("TEXT");
@@ -324,6 +328,10 @@ namespace server.Migrations
 
             modelBuilder.Entity("server.Data.Models.Chat.ChatMessage", b =>
                 {
+                    b.HasOne("server.Data.Models.Chat.Conversation", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId");
+
                     b.HasOne("server.Data.Models.Chat.Room", null)
                         .WithMany("Messages")
                         .HasForeignKey("RoomId");
@@ -348,6 +356,11 @@ namespace server.Migrations
                     b.Navigation("UserOne");
 
                     b.Navigation("UserTwo");
+                });
+
+            modelBuilder.Entity("server.Data.Models.Chat.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("server.Data.Models.Chat.Room", b =>

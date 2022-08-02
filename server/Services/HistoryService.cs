@@ -50,5 +50,44 @@ namespace server.Services
             foundRoom.Messages.Add(new ChatMessage { User = user, Message = message, Time = DateTime.Now });
             await _context.SaveChangesAsync();
         }
+
+        public async Task<ConversationDTO> GetConversationAsync(string sender, string recipient)
+        {
+            var user1 = await _userManager.FindByNameAsync(sender);
+            var user2 = await _userManager.FindByNameAsync(recipient);
+
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(c => c.UserOneId == user1.Id && c.UserTwoId == user2.Id);
+            if (conversation == null)
+            {
+                conversation = new Conversation { UserOne = user1, UserTwo = user2 };
+                conversation.Messages = new List<ChatMessage>();
+                conversation.Id = $"{user1.Id}-{user2.Id}";
+
+                _context.Conversations.Add(conversation);
+                await _context.SaveChangesAsync();
+            }
+
+            var conversationDTO = new ConversationDTO
+            {
+                Id = conversation.Id,
+                UserOne = user1.UserName,
+                UserTwo = user2.UserName,
+                Messages = new List<ChatMessageDTO>()
+
+            };
+
+            return conversationDTO;
+        }
+
+        public async Task SaveConversationMessageAsync(string sender, string recipient, string message)
+        {
+            var user1 = await _userManager.FindByNameAsync(sender);
+            var user2 = await _userManager.FindByNameAsync(recipient);
+
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(c => c.UserOneId == user1.Id && c.UserTwoId == user2.Id);
+            var user = await _userManager.FindByNameAsync(sender);
+            conversation.Messages.Add(new ChatMessage { User = user, Message = message, Time = DateTime.Now });
+            await _context.SaveChangesAsync();
+        }
     }
 }

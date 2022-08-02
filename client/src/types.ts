@@ -20,7 +20,15 @@ export interface IMessage {
   message: string;
 }
 
+export interface IConversation {
+  id: string;
+  userOne: string;
+  userTwo: string;
+  messages: IMessage[];
+}
+
 export interface IOpenRoom {
+  id?: string;
   room: string;
   users: string[];
   messages: IMessage[];
@@ -40,10 +48,10 @@ export interface IMessageContainerProps {
 }
 
 export interface ISendMessageFormProps {
-  sendMessage: (message: string, room: string) => Promise<void>;
-  startTyping: (room: string) => void;
-  stopTyping: (room: string) => void;
-  room: string;
+  sendMessage: (message: string, room: string, id?: string) => Promise<void>;
+  startTyping: (room: string, id?: string) => void;
+  stopTyping: (room: string, id?: string) => void;
+  room: IOpenRoom;
 }
 
 export interface IConnectedUsersProps {

@@ -6,10 +6,12 @@ namespace server.Hubs.HubServices
     public class ChatConnectionsRepository
     {
         List<UserConnection> _connections;
+        public List<ConnectedUser> Users;
 
         public ChatConnectionsRepository()
         {
             _connections = new List<UserConnection>();
+            Users = new List<ConnectedUser>();
         }
 
         public void Add(UserConnection userConnection)
